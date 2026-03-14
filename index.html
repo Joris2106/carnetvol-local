@@ -237,11 +237,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
 .btn-import:active,.btn-export:active{opacity:.85}
 #import-file-input{display:none}
 .import-info{font-size:11px;color:var(--text3);text-align:center;margin-top:4px;line-height:1.5}
+/* MODAL EXPORT JSON */
+.export-modal{position:fixed;inset:0;z-index:9995;background:rgba(0,0,0,.85);display:flex;flex-direction:column;padding:14px;gap:10px}
+.export-modal-title{font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--accent);text-transform:uppercase}
+.export-textarea{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;font-size:11px;padding:10px;resize:none;outline:none;-webkit-user-select:all;user-select:all}
+.export-modal-btns{display:flex;gap:8px;flex-shrink:0}
+.btn-copy{flex:1;background:linear-gradient(135deg,var(--acc2),var(--accent));border:none;border-radius:8px;color:#fff;font-family:"Rajdhani",sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:12px;cursor:pointer}
+.btn-share{flex:1;background:linear-gradient(135deg,#0a3d2e,var(--green));border:none;border-radius:8px;color:#fff;font-family:"Rajdhani",sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:12px;cursor:pointer}
+.btn-close-export{flex:0 0 48px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:20px;cursor:pointer}
 
 /* TOAST */
 .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;padding:9px 20px;border-radius:20px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
@@ -675,17 +684,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
     <!-- SECTION EXPORT / IMPORT -->
     <div class="profil-section">
       <div class="profil-title">💾 Sauvegarde des données</div>
-      <div style="padding:13px;display:flex;flex-direction:column;gap:0">
-        <button class="btn-export" onclick="exportAllData()">
-          📤 EXPORTER TOUTES MES DONNÉES
+      <div style="padding:13px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn-export" onclick="exportToExcel()">
+          📊 EXPORTER EN EXCEL (.xlsx)
         </button>
-        <div class="import-info">Télécharge un fichier .json avec tous vos vols,<br>séances simu, et dates médicales</div>
-        <div style="height:14px"></div>
-        <button class="btn-import" onclick="document.getElementById('import-file-input').click()">
-          📥 IMPORTER DES DONNÉES
+        <div class="import-info">Génère un fichier Excel avec tous vos vols,<br>séances simu et dates médicales</div>
+        <button class="btn-import" onclick="document.getElementById('import-xlsx-input').click()">
+          📥 IMPORTER UN FICHIER EXCEL
         </button>
-        <input type="file" id="import-file-input" accept=".json" onchange="importAllData(event)">
-        <div class="import-info">Restaure des données depuis un fichier exporté précédemment</div>
+        <input type="file" id="import-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(event)">
+        <div class="import-info">Restaure les données depuis un fichier Excel exporté</div>
       </div>
     </div>
 
@@ -1749,90 +1757,192 @@ function loadCustomOptions(){
 }
 
 // ══ EXPORT / IMPORT DES DONNÉES ═════════════════════════════════════
-function exportAllData(){
-  // Lire toutes les données
-  var profil = {};
-  try{ profil = JSON.parse(localStorage.getItem('cv_profil') || '{}'); }catch(e){}
+function exportToExcel(){
+  try{
+    var profil = {};
+    try{ profil = JSON.parse(localStorage.getItem('cv_profil') || '{}'); }catch(e){}
 
-  var exportData = {
-    version:    '2.0',
-    exportDate: new Date().toISOString(),
-    appVersion: '1363v20260129',
-    vols:       vols,
-    simus:      simus,
-    profil:     profil,
-    customMachines:  customMachines,
-    customFonctions: customFonctions
-  };
+    var wb = XLSX.utils.book_new();
 
-  // Créer le fichier JSON
-  var json     = JSON.stringify(exportData, null, 2);
-  var blob     = new Blob([json], {type: 'application/json'});
-  var url      = URL.createObjectURL(blob);
-  var date     = new Date().toISOString().split('T')[0];
-  var filename = 'CarnetVol_backup_' + date + '.json';
+    // ── Feuille VOLS ──────────────────────────────────────────────
+    var volHeaders = ['Date','Type','Immatriculation','Fonction','Pilote','Mission','Code','Lieu',
+      'Pot.Jour','Pot.Nuit','Pot.JVN','Pot.IFR','Pot.Tactique',
+      'Att.Jour','Att.Nuit','ILS','VOR','NDB','GCA','SCA','RNP',
+      'SlingJ','SlingN','RappelJ','RappelN','TreuJ','TreuN',
+      'CordeJ','CordeN','GrappeJ','GrappeN','NacelleJ','NacelleN',
+      'TagJ1','TagJ2','TagN1','TagN2','Remarques'];
 
-  // Déclencher le téléchargement
-  var a = document.createElement('a');
-  a.href     = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    var volRows = vols.map(function(v){
+      return [
+        v.date||'', v.type||'', v.immat||'', v.fonction||'', v.pilote||'',
+        v.mission||'', v.code||'', v.lieu||'',
+        v.potJour||'', v.potNuit||'', v.potJvn||'', v.potIvi||'', v.potTac||'',
+        v.attJour||'', v.attNuit||'',
+        v.ils||'', v.vor||'', v.ndb||'', v.gca||'', v.sca||'', v.rnp||'',
+        v.slingJ||'', v.slingN||'', v.rappelJ||'', v.rappelN||'',
+        v.treuJ||'', v.treuN||'', v.cordeJ||'', v.cordeN||'',
+        v.grappeJ||'', v.grappeN||'', v.nacelleJ||'', v.nacelleN||'',
+        v.tagJ1||'', v.tagJ2||'', v.tagN1||'', v.tagN2||'',
+        v.remarques||''
+      ];
+    });
+    var wsVols = XLSX.utils.aoa_to_sheet([volHeaders].concat(volRows));
+    // Largeurs colonnes
+    wsVols['!cols'] = [
+      {wch:12},{wch:10},{wch:14},{wch:8},{wch:18},{wch:20},{wch:6},{wch:14},
+      {wch:9},{wch:9},{wch:9},{wch:9},{wch:9},
+      {wch:9},{wch:9},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},
+      {wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},
+      {wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},
+      {wch:6},{wch:6},{wch:6},{wch:6},{wch:20}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsVols, 'Vols');
 
-  toast('✅ Données exportées — ' + vols.length + ' vols, ' + simus.length + ' séances');
+    // ── Feuille SIMULATEUR ───────────────────────────────────────
+    var simuHeaders = ['Date','Machine','Type Simu','Fonction','Pilote','Mission',
+      'Pot.Jour','Pot.Nuit','Pot.JVN','Pot.IFR','Pot.Tactique',
+      'Att.Jour','Att.Nuit','ILS','VOR','NDB','GCA','SCA','RNP','Remarques'];
+
+    var simuRows = simus.map(function(s){
+      return [
+        s.date||'', s.machine||'', s.typeSimu||'', s.fonction||'', s.pilote||'', s.mission||'',
+        s.potJour||'', s.potNuit||'', s.potJvn||'', s.potIvi||'', s.potTac||'',
+        s.attJour||'', s.attNuit||'',
+        s.ils||'', s.vor||'', s.ndb||'', s.gca||'', s.sca||'', s.rnp||'',
+        s.remarques||''
+      ];
+    });
+    var wsSimu = XLSX.utils.aoa_to_sheet([simuHeaders].concat(simuRows));
+    wsSimu['!cols'] = [{wch:12},{wch:10},{wch:12},{wch:8},{wch:18},{wch:20},
+      {wch:9},{wch:9},{wch:9},{wch:9},{wch:9},{wch:9},{wch:9},
+      {wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, wsSimu, 'Simulateur');
+
+    // ── Feuille PROFIL ───────────────────────────────────────────
+    var wsProfil = XLSX.utils.aoa_to_sheet([
+      ['Champ','Valeur'],
+      ['VMP (Visite Medicale)',   profil.vmp   || ''],
+      ['CEMPN Paris',             profil.cempn || ''],
+      ['Machines personnalisees', customMachines.join(', ')],
+      ['Fonctions personnalisees',customFonctions.join(', ')],
+      ['Version données',         '1363v20260129'],
+      ['Date export',             new Date().toISOString()]
+    ]);
+    wsProfil['!cols'] = [{wch:28},{wch:30}];
+    XLSX.utils.book_append_sheet(wb, wsProfil, 'Profil');
+
+    // ── Télécharger ──────────────────────────────────────────────
+    var date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, 'CarnetVol_backup_' + date + '.xlsx');
+    toast('✅ Export Excel — ' + vols.length + ' vols, ' + simus.length + ' seances');
+
+  }catch(err){
+    console.error('Export Excel error:', err);
+    toast('Erreur export : ' + err.message, '#e63946');
+  }
 }
 
-function importAllData(event){
+function importFromExcel(event){
   var file = event.target.files[0];
   if(!file){ return; }
   event.target.value = '';
   var reader = new FileReader();
   reader.onload = function(e){
     try{
-      var data = JSON.parse(e.target.result);
-      if(!data.vols || !Array.isArray(data.vols)){
-        toast('Fichier invalide', '#e63946');
-        return;
+      var wb = XLSX.read(e.target.result, {type:'array'});
+
+      // ── Lire feuille Vols ──────────────────────────────────────
+      var wsVols = wb.Sheets['Vols'];
+      if(!wsVols){ toast('Feuille Vols introuvable', '#e63946'); return; }
+      var volData = XLSX.utils.sheet_to_json(wsVols, {header:1});
+      var headers = volData[0];
+      var newVols = [];
+      for(var i=1; i<volData.length; i++){
+        var r = volData[i];
+        if(!r[0]) continue;
+        newVols.push({
+          id:        'imp' + Date.now() + i,
+          date:      r[0]  || '', type:      r[1]  || '', immat:   r[2]  || '',
+          fonction:  r[3]  || '', pilote:    r[4]  || '', mission: r[5]  || '',
+          code:      r[6]  || '', lieu:      r[7]  || '',
+          potJour:   r[8]  || '', potNuit:   r[9]  || '', potJvn:  r[10] || '',
+          potIvi:    r[11] || '', potTac:    r[12] || '',
+          attJour:   r[13] || '', attNuit:   r[14] || '',
+          ils:       r[15] || '', vor:       r[16] || '', ndb:     r[17] || '',
+          gca:       r[18] || '', sca:       r[19] || '', rnp:     r[20] || '',
+          slingJ:    r[21] || '', slingN:    r[22] || '',
+          rappelJ:   r[23] || '', rappelN:   r[24] || '',
+          treuJ:     r[25] || '', treuN:     r[26] || '',
+          cordeJ:    r[27] || '', cordeN:    r[28] || '',
+          grappeJ:   r[29] || '', grappeN:   r[30] || '',
+          nacelleJ:  r[31] || '', nacelleN:  r[32] || '',
+          tagJ1:     r[33] || '', tagJ2:     r[34] || '',
+          tagN1:     r[35] || '', tagN2:     r[36] || '',
+          remarques: r[37] || ''
+        });
       }
-      var nbVols  = data.vols.length;
-      var nbSimus = data.simus ? data.simus.length : 0;
-      if(!confirm('Importer ' + nbVols + ' vols et ' + nbSimus + ' seances ? Cette action remplacera toutes vos donnees actuelles.')){ return; }
-      vols  = data.vols;
-      simus = data.simus || [];
+
+      // ── Lire feuille Simulateur ───────────────────────────────
+      var wsSimu = wb.Sheets['Simulateur'];
+      var newSimus = [];
+      if(wsSimu){
+        var simuData = XLSX.utils.sheet_to_json(wsSimu, {header:1});
+        for(var j=1; j<simuData.length; j++){
+          var s = simuData[j];
+          if(!s[0]) continue;
+          newSimus.push({
+            id:       'smp' + Date.now() + j,
+            date:     s[0] || '', machine:  s[1] || '', typeSimu: s[2] || '',
+            fonction: s[3] || '', pilote:   s[4] || '', mission:  s[5] || '',
+            potJour:  s[6] || '', potNuit:  s[7] || '', potJvn:   s[8] || '',
+            potIvi:   s[9] || '', potTac:   s[10]|| '',
+            attJour:  s[11]|| '', attNuit:  s[12]|| '',
+            ils:      s[13]|| '', vor:      s[14]|| '', ndb:      s[15]|| '',
+            gca:      s[16]|| '', sca:      s[17]|| '', rnp:      s[18]|| '',
+            remarques:s[19]|| '',
+            slingJ:'',slingN:'',rappelJ:'',rappelN:'',treuJ:'',treuN:'',
+            cordeJ:'',cordeN:'',grappeJ:'',grappeN:'',nacelleJ:'',nacelleN:'',
+            tagJ1:'',tagJ2:'',tagN1:'',tagN2:''
+          });
+        }
+      }
+
+      // ── Lire feuille Profil ───────────────────────────────────
+      var wsProfil = wb.Sheets['Profil'];
+      var newProfil = {};
+      if(wsProfil){
+        var profilData = XLSX.utils.sheet_to_json(wsProfil, {header:1});
+        profilData.slice(1).forEach(function(row){
+          if(row[0] === 'VMP (Visite Medicale)')   newProfil.vmp   = row[1] || '';
+          if(row[0] === 'CEMPN Paris')              newProfil.cempn = row[1] || '';
+        });
+      }
+
+      if(!confirm('Importer ' + newVols.length + ' vols et ' + newSimus.length + ' seances ? Cela remplacera vos donnees actuelles.')){ return; }
+
+      vols  = newVols;
+      simus = newSimus;
       localStorage.setItem('cv_vols',  JSON.stringify(vols));
       localStorage.setItem('cv_simus', JSON.stringify(simus));
-      if(data.profil){
-        localStorage.setItem('cv_profil', JSON.stringify(data.profil));
+
+      if(newProfil.vmp || newProfil.cempn){
+        localStorage.setItem('cv_profil', JSON.stringify(newProfil));
         var vmpEl   = document.getElementById('p-vmp');
         var cempnEl = document.getElementById('p-cempn');
-        if(vmpEl)   vmpEl.value   = data.profil.vmp   || '';
-        if(cempnEl) cempnEl.value = data.profil.cempn || '';
+        if(vmpEl)   vmpEl.value   = newProfil.vmp   || '';
+        if(cempnEl) cempnEl.value = newProfil.cempn || '';
         updateExpiryBadges();
       }
-      if(data.customMachines && Array.isArray(data.customMachines)){
-        customMachines = data.customMachines;
-        localStorage.setItem('cv_custom_machines', JSON.stringify(customMachines));
-        customMachines.forEach(function(m){ addOptToSel('f-type',m); addOptToSel('s-machine',m); });
-      }
-      if(data.customFonctions && Array.isArray(data.customFonctions)){
-        customFonctions = data.customFonctions;
-        localStorage.setItem('cv_custom_fonctions', JSON.stringify(customFonctions));
-        customFonctions.forEach(function(f){ addOptToSel('f-fonction',f); addOptToSel('s-fonction',f); });
-      }
-      if(data.appVersion){ localStorage.setItem('cv_data_version', data.appVersion); }
-      updateHeader();
-      populateListFilters();
-      renderList();
-      updateProfil();
-      toast('Import OK - ' + nbVols + ' vols restaures !');
+
+      updateHeader(); populateListFilters(); renderList(); updateProfil();
+      toast('Import OK - ' + newVols.length + ' vols restaures !');
+
     }catch(err){
-      console.error('Import error:', err);
+      console.error('Import Excel error:', err);
       toast('Erreur import : ' + err.message, '#e63946');
     }
   };
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 }
 
 // ══ INIT ═══════════════════════════════════════════════════════════
@@ -1927,6 +2037,7 @@ function dismissBanner(){
     </div>
   </div>
 </div>
+
 
 </body>
 </html>
