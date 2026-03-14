@@ -231,6 +231,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
 /* BOUTON +AUTRE dans select */
 .btn-add-option{display:block;width:100%;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:6px;color:var(--accent);font-family:"Rajdhani",sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px;cursor:pointer;margin-top:6px;text-align:center}
 
+/* EXPORT / IMPORT */
+.btn-export{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:linear-gradient(135deg,#0a3d2e,var(--green));border:none;border-radius:8px;color:#fff;font-family:"Rajdhani",sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:12px;cursor:pointer;margin-bottom:8px}
+.btn-import{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(0,180,216,.1);border:1px solid rgba(0,180,216,.3);border-radius:8px;color:var(--accent);font-family:"Rajdhani",sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:12px;cursor:pointer;margin-bottom:8px}
+.btn-import:active,.btn-export:active{opacity:.85}
+#import-file-input{display:none}
+.import-info{font-size:11px;color:var(--text3);text-align:center;margin-top:4px;line-height:1.5}
+
 /* TOAST */
 .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;padding:9px 20px;border-radius:20px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
@@ -665,6 +672,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
         </div>
       </div>
     </div>
+    <!-- SECTION EXPORT / IMPORT -->
+    <div class="profil-section">
+      <div class="profil-title">💾 Sauvegarde des données</div>
+      <div style="padding:13px;display:flex;flex-direction:column;gap:0">
+        <button class="btn-export" onclick="exportAllData()">
+          📤 EXPORTER TOUTES MES DONNÉES
+        </button>
+        <div class="import-info">Télécharge un fichier .json avec tous vos vols,<br>séances simu, et dates médicales</div>
+        <div style="height:14px"></div>
+        <button class="btn-import" onclick="document.getElementById('import-file-input').click()">
+          📥 IMPORTER DES DONNÉES
+        </button>
+        <input type="file" id="import-file-input" accept=".json" onchange="importAllData(event)">
+        <div class="import-info">Restaure des données depuis un fichier exporté précédemment</div>
+      </div>
+    </div>
+
     <div style="height:20px"></div>
   </div>
 </div>
@@ -1722,6 +1746,93 @@ function setSelVal(selId,val){ var sel=document.getElementById(selId); if(sel) s
 function loadCustomOptions(){
   customMachines.forEach(function(m){ addOptToSel('f-type',m); addOptToSel('s-machine',m); });
   customFonctions.forEach(function(f){ addOptToSel('f-fonction',f); addOptToSel('s-fonction',f); });
+}
+
+// ══ EXPORT / IMPORT DES DONNÉES ═════════════════════════════════════
+function exportAllData(){
+  // Lire toutes les données
+  var profil = {};
+  try{ profil = JSON.parse(localStorage.getItem('cv_profil') || '{}'); }catch(e){}
+
+  var exportData = {
+    version:    '2.0',
+    exportDate: new Date().toISOString(),
+    appVersion: '1363v20260129',
+    vols:       vols,
+    simus:      simus,
+    profil:     profil,
+    customMachines:  customMachines,
+    customFonctions: customFonctions
+  };
+
+  // Créer le fichier JSON
+  var json     = JSON.stringify(exportData, null, 2);
+  var blob     = new Blob([json], {type: 'application/json'});
+  var url      = URL.createObjectURL(blob);
+  var date     = new Date().toISOString().split('T')[0];
+  var filename = 'CarnetVol_backup_' + date + '.json';
+
+  // Déclencher le téléchargement
+  var a = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  toast('✅ Données exportées — ' + vols.length + ' vols, ' + simus.length + ' séances');
+}
+
+function importAllData(event){
+  var file = event.target.files[0];
+  if(!file){ return; }
+  event.target.value = '';
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = JSON.parse(e.target.result);
+      if(!data.vols || !Array.isArray(data.vols)){
+        toast('Fichier invalide', '#e63946');
+        return;
+      }
+      var nbVols  = data.vols.length;
+      var nbSimus = data.simus ? data.simus.length : 0;
+      if(!confirm('Importer ' + nbVols + ' vols et ' + nbSimus + ' seances ? Cette action remplacera toutes vos donnees actuelles.')){ return; }
+      vols  = data.vols;
+      simus = data.simus || [];
+      localStorage.setItem('cv_vols',  JSON.stringify(vols));
+      localStorage.setItem('cv_simus', JSON.stringify(simus));
+      if(data.profil){
+        localStorage.setItem('cv_profil', JSON.stringify(data.profil));
+        var vmpEl   = document.getElementById('p-vmp');
+        var cempnEl = document.getElementById('p-cempn');
+        if(vmpEl)   vmpEl.value   = data.profil.vmp   || '';
+        if(cempnEl) cempnEl.value = data.profil.cempn || '';
+        updateExpiryBadges();
+      }
+      if(data.customMachines && Array.isArray(data.customMachines)){
+        customMachines = data.customMachines;
+        localStorage.setItem('cv_custom_machines', JSON.stringify(customMachines));
+        customMachines.forEach(function(m){ addOptToSel('f-type',m); addOptToSel('s-machine',m); });
+      }
+      if(data.customFonctions && Array.isArray(data.customFonctions)){
+        customFonctions = data.customFonctions;
+        localStorage.setItem('cv_custom_fonctions', JSON.stringify(customFonctions));
+        customFonctions.forEach(function(f){ addOptToSel('f-fonction',f); addOptToSel('s-fonction',f); });
+      }
+      if(data.appVersion){ localStorage.setItem('cv_data_version', data.appVersion); }
+      updateHeader();
+      populateListFilters();
+      renderList();
+      updateProfil();
+      toast('Import OK - ' + nbVols + ' vols restaures !');
+    }catch(err){
+      console.error('Import error:', err);
+      toast('Erreur import : ' + err.message, '#e63946');
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ══ INIT ═══════════════════════════════════════════════════════════
