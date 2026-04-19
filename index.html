@@ -596,19 +596,60 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
   <div style="padding:11px">
     <div class="profil-section">
       <div class="profil-title">🏥 Aptitude médicale</div>
+
+      <!-- VMP -->
       <div class="profil-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div style="display:flex;align-items:center;width:100%;gap:8px">
-          <div class="profil-lbl" style="flex:1">Visite médicale périodique<br><span style="font-size:10px;color:var(--text3)">Validité 6 mois</span></div>
-          <input type="date" class="profil-input" id="p-vmp" onchange="saveProfilDates()">
+        <div style="display:flex;align-items:center;width:100%;gap:8px;flex-wrap:wrap">
+          <div class="profil-lbl" style="flex:1;min-width:120px">Visite médicale périodique</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" id="p-vmp-duree" min="1" max="120" value="6"
+                style="width:54px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:6px 8px;outline:none;text-align:center"
+                onchange="saveProfilDates()">
+              <span style="font-size:11px;color:var(--text2)">mois</span>
+            </div>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer">
+              <input type="checkbox" id="p-vmp-eom" onchange="saveProfilDates()"
+                style="accent-color:var(--accent);width:14px;height:14px">
+              fin de mois
+            </label>
+            <input type="date" class="profil-input" id="p-vmp" onchange="saveProfilDates()" style="width:148px">
+          </div>
         </div>
         <div id="vmp-expiry" style="width:100%;font-family:monospace;font-size:12px;padding:5px 10px;border-radius:5px;display:none"></div>
       </div>
+
+      <!-- CEMPN -->
       <div class="profil-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div style="display:flex;align-items:center;width:100%;gap:8px">
-          <div class="profil-lbl" style="flex:1">Certificat d'aptitude CEMPN Paris<br><span style="font-size:10px;color:var(--text3)">Validité 24 mois</span></div>
-          <input type="date" class="profil-input" id="p-cempn" onchange="saveProfilDates()">
+        <div style="display:flex;align-items:center;width:100%;gap:8px;flex-wrap:wrap">
+          <div class="profil-lbl" style="flex:1;min-width:120px">Certificat d'aptitude CEMPN Paris</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" id="p-cempn-duree" min="1" max="120" value="24"
+                style="width:54px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:6px 8px;outline:none;text-align:center"
+                onchange="saveProfilDates()">
+              <span style="font-size:11px;color:var(--text2)">mois</span>
+            </div>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer">
+              <input type="checkbox" id="p-cempn-eom" onchange="saveProfilDates()"
+                style="accent-color:var(--accent);width:14px;height:14px">
+              fin de mois
+            </label>
+            <input type="date" class="profil-input" id="p-cempn" onchange="saveProfilDates()" style="width:148px">
+          </div>
         </div>
         <div id="cempn-expiry" style="width:100%;font-family:monospace;font-size:12px;padding:5px 10px;border-radius:5px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- QUALIFICATIONS PERSONNALISÉES -->
+    <div class="profil-section">
+      <div class="profil-title">🎖️ Qualifications</div>
+      <div id="qualif-list"></div>
+      <div style="padding:10px 13px">
+        <button onclick="openQualifModal()" style="width:100%;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.3);border-radius:7px;color:var(--accent);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          ＋ AJOUTER UNE QUALIFICATION
+        </button>
       </div>
     </div>
 
@@ -1306,41 +1347,62 @@ function renderStatsSimus(){
 }
 
 // ══ PROFIL ═════════════════════════════════════════════════════════
+var qualifications = [];
+try{ qualifications = JSON.parse(localStorage.getItem('cv_qualifications') || '[]'); }catch(e){}
+
 function saveProfilDates(){
-  localStorage.setItem('cv_profil',JSON.stringify({vmp:gv('p-vmp'),cempn:gv('p-cempn')}));
+  var profil = {
+    vmp:       gv('p-vmp'),
+    cempn:     gv('p-cempn'),
+    vmpDuree:  parseInt(document.getElementById('p-vmp-duree').value)||6,
+    vmpEom:    document.getElementById('p-vmp-eom').checked,
+    cempnDuree:parseInt(document.getElementById('p-cempn-duree').value)||24,
+    cempnEom:  document.getElementById('p-cempn-eom').checked
+  };
+  localStorage.setItem('cv_profil', JSON.stringify(profil));
   updateExpiryBadges();
 }
 function loadProfilDates(){
-  try{var p=JSON.parse(localStorage.getItem('cv_profil')||'{}');
-    document.getElementById('p-vmp').value=p.vmp||'';
-    document.getElementById('p-cempn').value=p.cempn||'';
+  try{
+    var p=JSON.parse(localStorage.getItem('cv_profil')||'{}');
+    document.getElementById('p-vmp').value = p.vmp||'';
+    document.getElementById('p-cempn').value = p.cempn||'';
+    document.getElementById('p-vmp-duree').value = p.vmpDuree||6;
+    document.getElementById('p-vmp-eom').checked = !!p.vmpEom;
+    document.getElementById('p-cempn-duree').value = p.cempnDuree||24;
+    document.getElementById('p-cempn-eom').checked = !!p.cempnEom;
   }catch(e){}
   updateExpiryBadges();
 }
-function addMonths(dateStr,months){
-  if(!dateStr)return null;
-  var d=new Date(dateStr);
-  d.setMonth(d.getMonth()+months);
+function addMonthsEndOfMonth(dateStr, months, endOfMonth){
+  if(!dateStr) return null;
+  var d = new Date(dateStr + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  if(endOfMonth){
+    // Last day of that month
+    d = new Date(d.getFullYear(), d.getMonth()+1, 0);
+  }
   return d;
 }
-function expiryBadge(elId,dateStr,months){
-  var el=document.getElementById(elId);
-  if(!el)return;
-  if(!dateStr){el.style.display='none';return;}
-  var exp=addMonths(dateStr,months);
-  var now=new Date(); now.setHours(0,0,0,0);
-  var diffDays=Math.round((exp-now)/(1000*60*60*24));
-  var expStr=fDate(exp.toISOString().split('T')[0]);
-  var txt,bg,col;
+function expiryBadgeEx(elId, dateStr, months, endOfMonth){
+  var el = document.getElementById(elId);
+  if(!el) return;
+  if(!dateStr){ el.style.display='none'; return; }
+  var exp = addMonthsEndOfMonth(dateStr, months, endOfMonth);
+  var now = new Date(); now.setHours(0,0,0,0);
+  var diffDays = Math.round((exp - now)/(1000*60*60*24));
+  var expStr = fDate(exp.toISOString().split('T')[0]);
+  var txt, bg, col;
+  var eomTxt = endOfMonth ? ' (fin de mois)' : '';
   if(diffDays<0){
-    txt='⛔ EXPIRÉE depuis '+Math.abs(diffDays)+' j — '+expStr;
-    bg='rgba(230,57,70,.15)';col='var(--red)';
+    txt='⛔ EXPIRÉE depuis '+Math.abs(diffDays)+' j — '+expStr+eomTxt;
+    bg='rgba(230,57,70,.15)'; col='var(--red)';
   } else if(diffDays<=30){
-    txt='⚠️ Expire dans '+diffDays+' j — '+expStr;
-    bg='rgba(255,183,3,.15)';col='var(--amber)';
+    txt='⚠️ Expire dans '+diffDays+' j — '+expStr+eomTxt;
+    bg='rgba(255,183,3,.15)'; col='var(--amber)';
   } else {
-    txt="✅ Valide jusqu'au "+expStr+" ("+diffDays+" j)";
-    bg='rgba(45,198,83,.12)';col='var(--green)';
+    txt="✅ Valide jusqu'au "+expStr+eomTxt+' ('+diffDays+' j)';
+    bg='rgba(45,198,83,.12)'; col='var(--green)';
   }
   el.style.display='block';
   el.style.background=bg;
@@ -1349,10 +1411,113 @@ function expiryBadge(elId,dateStr,months){
   el.textContent=txt;
 }
 function updateExpiryBadges(){
-  var vmp=document.getElementById('p-vmp');
-  var cempn=document.getElementById('p-cempn');
-  expiryBadge('vmp-expiry',   vmp  ?vmp.value  :'', 6);
-  expiryBadge('cempn-expiry', cempn?cempn.value:'', 24);
+  var p={};
+  try{ p=JSON.parse(localStorage.getItem('cv_profil')||'{}'); }catch(e){}
+  var vmp   = document.getElementById('p-vmp');
+  var cempn = document.getElementById('p-cempn');
+  var vmpDuree   = parseInt(document.getElementById('p-vmp-duree').value)||6;
+  var cempnDuree = parseInt(document.getElementById('p-cempn-duree').value)||24;
+  var vmpEom     = document.getElementById('p-vmp-eom').checked;
+  var cempnEom   = document.getElementById('p-cempn-eom').checked;
+  expiryBadgeEx('vmp-expiry',   vmp  ?vmp.value  :'', vmpDuree,   vmpEom);
+  expiryBadgeEx('cempn-expiry', cempn?cempn.value:'', cempnDuree, cempnEom);
+}
+
+// ── Qualifications personnalisées ──────────────────────────────────
+var _qualifEditIdx = -1;
+function openQualifModal(idx){
+  _qualifEditIdx = (idx !== undefined) ? idx : -1;
+  var title = document.getElementById('qualif-modal-title');
+  var btn   = document.getElementById('qualif-save-btn');
+  if(_qualifEditIdx >= 0){
+    var q = qualifications[_qualifEditIdx];
+    document.getElementById('qualif-nom').value   = q.nom||'';
+    document.getElementById('qualif-date').value  = q.date||'';
+    document.getElementById('qualif-duree').value = q.duree||12;
+    document.getElementById('qualif-eom').checked = !!q.eom;
+    title.textContent = 'Modifier la qualification';
+    btn.textContent   = 'MODIFIER';
+  } else {
+    document.getElementById('qualif-nom').value   = '';
+    document.getElementById('qualif-date').value  = '';
+    document.getElementById('qualif-duree').value = 12;
+    document.getElementById('qualif-eom').checked = false;
+    title.textContent = 'Nouvelle qualification';
+    btn.textContent   = 'AJOUTER';
+  }
+  document.getElementById('qualif-modal').style.display='flex';
+  setTimeout(function(){ document.getElementById('qualif-nom').focus(); }, 100);
+}
+function closeQualifModal(){
+  document.getElementById('qualif-modal').style.display='none';
+}
+function saveQualif(){
+  var nom   = document.getElementById('qualif-nom').value.trim();
+  var date  = document.getElementById('qualif-date').value;
+  var duree = parseInt(document.getElementById('qualif-duree').value)||12;
+  var eom   = document.getElementById('qualif-eom').checked;
+  if(!nom){ toast('⚠️ Entrez un nom', '#e63946'); return; }
+  if(!date){ toast('⚠️ Entrez une date', '#e63946'); return; }
+  var q = {nom:nom, date:date, duree:duree, eom:eom};
+  if(_qualifEditIdx >= 0){
+    qualifications[_qualifEditIdx] = q;
+  } else {
+    qualifications.push(q);
+  }
+  localStorage.setItem('cv_qualifications', JSON.stringify(qualifications));
+  closeQualifModal();
+  renderQualifList();
+  toast('✅ Qualification enregistrée');
+}
+function deleteQualif(idx){
+  if(!confirm('Supprimer cette qualification ?')) return;
+  qualifications.splice(idx,1);
+  localStorage.setItem('cv_qualifications', JSON.stringify(qualifications));
+  renderQualifList();
+  toast('🗑 Qualification supprimée');
+}
+function qualifExpiryInfo(q){
+  if(!q.date || !q.duree) return {txt:'—', col:'var(--text3)', bg:'transparent', border:'transparent'};
+  var exp = addMonthsEndOfMonth(q.date, q.duree, q.eom);
+  var now = new Date(); now.setHours(0,0,0,0);
+  var diffDays = Math.round((exp - now)/(1000*60*60*24));
+  var expStr = fDate(exp.toISOString().split('T')[0]);
+  var eomTxt = q.eom ? ' (fin de mois)' : '';
+  var txt, col, bg;
+  if(diffDays<0){
+    txt='⛔ Expirée depuis '+Math.abs(diffDays)+' j — '+expStr+eomTxt;
+    col='var(--red)'; bg='rgba(230,57,70,.1)';
+  } else if(diffDays<=30){
+    txt='⚠️ Expire dans '+diffDays+' j — '+expStr+eomTxt;
+    col='var(--amber)'; bg='rgba(255,183,3,.1)';
+  } else {
+    txt="✅ Valide jusqu'au "+expStr+eomTxt+' ('+diffDays+' j)';
+    col='var(--green)'; bg='rgba(45,198,83,.08)';
+  }
+  return {txt:txt, col:col, bg:bg};
+}
+function renderQualifList(){
+  var el = document.getElementById('qualif-list');
+  if(!el) return;
+  if(!qualifications.length){
+    el.innerHTML='<div style="padding:12px 13px;font-size:12px;color:var(--text3);font-style:italic">Aucune qualification ajoutée</div>';
+    return;
+  }
+  el.innerHTML = qualifications.map(function(q, idx){
+    var info = qualifExpiryInfo(q);
+    var dureeLabel = q.duree+' mois'+(q.eom?' · fin de mois':'');
+    return '<div class="profil-row" style="flex-direction:column;align-items:flex-start;gap:5px">'+
+      '<div style="display:flex;align-items:center;width:100%;gap:8px">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:13px;color:#fff;font-weight:600">'+q.nom+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);margin-top:2px">Depuis '+fDate(q.date)+' · '+dureeLabel+'</div>'+
+        '</div>'+
+        '<button onclick="openQualifModal('+idx+')" title="Modifier" style="background:rgba(0,180,216,.1);border:1px solid rgba(0,180,216,.25);border-radius:5px;color:var(--accent);font-size:12px;padding:5px 9px;cursor:pointer">✏️</button>'+
+        '<button onclick="deleteQualif('+idx+')" title="Supprimer" style="background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.25);border-radius:5px;color:var(--red);font-size:12px;padding:5px 9px;cursor:pointer">🗑</button>'+
+      '</div>'+
+      '<div style="width:100%;font-family:monospace;font-size:11px;padding:5px 10px;border-radius:5px;background:'+info.bg+';color:'+info.col+';border:1px solid '+info.col+'">'+info.txt+'</div>'+
+    '</div>';
+  }).join('');
 }
 function lastVolWith(key){
   var sorted=vols.filter(function(v){return pH(v[key])>0&&v.date;}).sort(function(a,b){return b.date.localeCompare(a.date);});
@@ -1360,6 +1525,7 @@ function lastVolWith(key){
 }
 function updateProfil(){
   loadProfilDates();
+  renderQualifList();
   var lj=lastVolWith('potJour'),ln=lastVolWith('potNuit'),ljvn=lastVolWith('potJvn'),lifr=lastVolWith('potIvi');
   document.getElementById('pv-jour').textContent=lj?fDate(lj):'—';
   document.getElementById('pv-nuit').textContent=ln?fDate(ln):'—';
@@ -1819,15 +1985,27 @@ function exportToExcel(){
     XLSX.utils.book_append_sheet(wb, wsSimu, 'Simulateur');
 
     // ── Feuille PROFIL ───────────────────────────────────────────
-    var wsProfil = XLSX.utils.aoa_to_sheet([
+    var profilRows = [
       ['Champ','Valeur'],
       ['VMP (Visite Medicale)',   profil.vmp   || ''],
+      ['VMP Duree (mois)',        profil.vmpDuree || 6],
+      ['VMP Fin de mois',        profil.vmpEom ? 'Oui' : 'Non'],
       ['CEMPN Paris',             profil.cempn || ''],
+      ['CEMPN Duree (mois)',      profil.cempnDuree || 24],
+      ['CEMPN Fin de mois',      profil.cempnEom ? 'Oui' : 'Non'],
       ['Machines personnalisees', customMachines.join(', ')],
       ['Fonctions personnalisees',customFonctions.join(', ')],
       ['Version données',         '1363v20260129'],
       ['Date export',             new Date().toISOString()]
-    ]);
+    ];
+    // Qualifications
+    if(qualifications.length){
+      profilRows.push(['--- Qualifications ---','']);
+      qualifications.forEach(function(q){
+        profilRows.push([q.nom, q.date+' / '+q.duree+'mois'+(q.eom?' fin-mois':'')]);
+      });
+    }
+    var wsProfil = XLSX.utils.aoa_to_sheet(profilRows);
     wsProfil['!cols'] = [{wch:28},{wch:30}];
     XLSX.utils.book_append_sheet(wb, wsProfil, 'Profil');
 
@@ -2055,6 +2233,37 @@ function dismissBanner(){
   <button onclick="dismissBanner()" style="background:rgba(255,255,255,.06);border:1px solid #1c3050;
     border-radius:7px;color:#6a90b8;font-size:16px;width:32px;height:32px;cursor:pointer;
     display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+</div>
+
+<!-- MODAL QUALIFICATION -->
+<div id="qualif-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeQualifModal()">
+  <div class="modal-box" style="max-width:370px">
+    <div class="modal-title" id="qualif-modal-title">Nouvelle qualification</div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Nom de la qualification</label>
+      <input class="modal-input" type="text" id="qualif-nom" placeholder="ex : QT EC145, BIA, QLM…" style="margin-bottom:0">
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Date d'obtention / début de validité</label>
+      <input class="modal-input" type="date" id="qualif-date" style="margin-bottom:0;color-scheme:dark">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px;flex:1">
+        <label style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Validité</label>
+        <input type="number" id="qualif-duree" min="1" max="240" value="12"
+          style="width:60px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:7px 8px;outline:none;text-align:center;-webkit-appearance:none">
+        <span style="font-size:11px;color:var(--text2)">mois</span>
+      </div>
+      <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="qualif-eom" style="accent-color:var(--accent);width:14px;height:14px">
+        fin de mois
+      </label>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeQualifModal()">ANNULER</button>
+      <button class="modal-btn-ok" id="qualif-save-btn" onclick="saveQualif()">AJOUTER</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL AJOUT OPTION -->
