@@ -1715,28 +1715,25 @@ function computeByKey(data, key, label){
 
 function exportPdfVols(){
   var {jsPDF}=window.jspdf;
-  var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  var W=210, H=297, m=8;
+  // Paysage A4 : 297×210mm
+  var doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var W=297, H=210, m=8;
 
-  // Données filtrées (mêmes filtres que stats)
-  var vsFrom=(document.getElementById('vs-from')||{}).value||'';
-  var vsTo  =(document.getElementById('vs-to')||{}).value||'';
+  // ── Données ────────────────────────────────────────────────────
   var data=getStatsFilteredVols(); // triés par date asc
-
-  // Vols hors filtre (pour "Total précédent")
   var dataIds={};
   data.forEach(function(v){dataIds[v.id]=1;});
-  var allVols=vols.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+  var allVols=vols.slice().sort(function(a,b){return(a.date||'').localeCompare(b.date||'');});
   var prevVols=allVols.filter(function(v){return !dataIds[v.id];});
-
-  // Simu filtrés sur la même période
+  var vsFrom=(document.getElementById('vs-from')||{}).value||'';
+  var vsTo  =(document.getElementById('vs-to')||{}).value||'';
   var simuFilt=simus.filter(function(s){
     if(vsFrom&&s.date&&s.date<vsFrom)return false;
     if(vsTo  &&s.date&&s.date>vsTo)  return false;
     return true;
   });
 
-  // Calcul des totaux
+  // ── Calculs ────────────────────────────────────────────────────
   function sumS(arr){
     var r={j:0,n:0,jvn:0,ivi:0,attJ:0,attN:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,
       slingJ:0,slingN:0,rappelJ:0,rappelN:0,treuJ:0,treuN:0,
@@ -1745,245 +1742,223 @@ function exportPdfVols(){
     arr.forEach(function(v){
       r.j+=pH(v.potJour);r.n+=pH(v.potNuit);r.jvn+=pH(v.potJvn);r.ivi+=pH(v.potIvi);
       r.attJ+=n(v.attJour);r.attN+=n(v.attNuit);
-      r.ils+=n(v.ils);r.vor+=n(v.vor);r.ndb+=n(v.ndb);
-      r.gca+=n(v.gca);r.sca+=n(v.sca);r.rnp+=n(v.rnp);
-      r.slingJ+=n(v.slingJ);r.slingN+=n(v.slingN);
-      r.rappelJ+=n(v.rappelJ);r.rappelN+=n(v.rappelN);
-      r.treuJ+=n(v.treuJ);r.treuN+=n(v.treuN);
-      r.cordeJ+=n(v.cordeJ);r.cordeN+=n(v.cordeN);
-      r.grappeJ+=n(v.grappeJ);r.grappeN+=n(v.grappeN);
-      r.nacelleJ+=n(v.nacelleJ);r.nacelleN+=n(v.nacelleN);
+      r.ils+=n(v.ils);r.vor+=n(v.vor);r.ndb+=n(v.ndb);r.gca+=n(v.gca);r.sca+=n(v.sca);r.rnp+=n(v.rnp);
+      r.slingJ+=n(v.slingJ);r.slingN+=n(v.slingN);r.rappelJ+=n(v.rappelJ);r.rappelN+=n(v.rappelN);
+      r.treuJ+=n(v.treuJ);r.treuN+=n(v.treuN);r.cordeJ+=n(v.cordeJ);r.cordeN+=n(v.cordeN);
+      r.grappeJ+=n(v.grappeJ);r.grappeN+=n(v.grappeN);r.nacelleJ+=n(v.nacelleJ);r.nacelleN+=n(v.nacelleN);
       r.tagJ1+=n(v.tagJ1);r.tagJ2+=n(v.tagJ2);r.tagN1+=n(v.tagN1);r.tagN2+=n(v.tagN2);
     });
+    r.perc=r.ils+r.vor+r.ndb+r.gca+r.sca+r.rnp;
+    r.app =r.tagJ1+r.tagJ2+r.tagN1+r.tagN2;
+    r.aero=r.slingJ+r.slingN+r.rappelJ+r.rappelN+r.treuJ+r.treuN
+          +r.cordeJ+r.cordeN+r.grappeJ+r.grappeN+r.nacelleJ+r.nacelleN;
     return r;
   }
   var cur=sumS(data), prev=sumS(prevVols), tot=sumS(allVols);
-  var simuJ=0,simuN=0,simuJvn=0,simuIvi=0;
-  simuFilt.forEach(function(s){simuJ+=pH(s.potJour);simuN+=pH(s.potNuit);simuJvn+=pH(s.potJvn);simuIvi+=pH(s.potIvi);});
-  var simuTot=simuJ+simuN;
+  var simuTot=0;
+  simuFilt.forEach(function(s){simuTot+=pH(s.potJour)+pH(s.potNuit);});
+  var simuTotAll=simus.reduce(function(acc,s){return acc+pH(s.potJour)+pH(s.potNuit);},0);
 
-  // Libellé de période
+  // ── Période ────────────────────────────────────────────────────
   var MS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   function mLbl(d){if(!d)return'—';var p=d.split('-');return MS[parseInt(p[1])-1]+'-'+p[0].slice(2);}
   var d0=data.length?data[0].date:'', d1=data.length?data[data.length-1].date:'';
   var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' — '+fDate(d1);
 
-  // Formatage heures
-  function hv(v){var r=parseFloat(v.toFixed(1));return r?String(r):'';}
-  function hv0(v){return String(parseFloat(v.toFixed(1)));}
+  // ── Formatage ──────────────────────────────────────────────────
+  function hv(v){return String(parseFloat(v.toFixed(1)));}
+  function hve(v){var r=parseFloat(v.toFixed(1));return r?String(r):'';}
+  function ni(v){return v?String(v):'';}
   function ni0(v){return String(v);}
 
   // Profil
   var profil={};
   try{profil=JSON.parse(localStorage.getItem('cv_profil')||'{}');}catch(e){}
 
+  // Styles communs
+  var tS={fontSize:8,cellPadding:2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[155,155,155],lineWidth:0.2};
+  var tH={fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:8};
+
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 1 — SYNTHÈSE
+  // ════════════════════════════════════════════════════════════════
   var y=m;
 
-  // ── TITRE ────────────────────────────────────────────────────────
+  // Barre titre
   doc.setFillColor(7,16,31);
-  doc.rect(m,y,W-2*m,8,'F');
-  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('EXTRAIT DU REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+5.5,{align:'center'});
-  y+=10;
+  doc.rect(m,y,W-2*m,9,'F');
+  doc.setFontSize(11.5);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+6,{align:'center'});
+  y+=11;
 
-  // ── EN-TÊTE PILOTE ───────────────────────────────────────────────
+  // Bandeau pilote
   doc.setFillColor(215,228,248);
   doc.rect(m,y,W-2*m,7,'FD');
-  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  doc.setFontSize(9.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
   var cw=(W-2*m)/4;
-  doc.text('GRADE : '+(profil.grade||'__________'), m+2,y+4.8);
-  doc.text('NOM : '+(profil.nom||'________________'), m+cw+2,y+4.8);
-  doc.text('PRENOM : '+(profil.prenom||'____________'), m+2*cw+2,y+4.8);
-  doc.text('BREVET : '+(profil.brevet||'__________'), m+3*cw+2,y+4.8);
+  [['GRADE',profil.grade||''],['NOM',profil.nom||''],['PRÉNOM',profil.prenom||''],['BREVET',profil.brevet||'']
+  ].forEach(function(pair,i){doc.text(pair[0]+' : '+pair[1],m+3+i*cw,y+4.8);});
   y+=9;
-  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
-  doc.text('Mois de : '+pLabel, m,y+4);
+
+  // Période
+  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  doc.text('Période : '+pLabel,m,y+4.5);
   y+=8;
 
-  // ── SECTION DOUBLE COLONNE ───────────────────────────────────────
-  var leftW=110, rightX=m+leftW+4, rightW=W-m-rightX; // rightW=80mm
-  var topY=y;
-
-  // Tableau vols (gauche)
-  var flightBody=data.map(function(v){
-    var tf=pH(v.potJour)+pH(v.potNuit);
-    return [v.lieu||'','',
-      v.potJour?hv(pH(v.potJour)):'',
-      v.potNuit?hv(pH(v.potNuit)):'',
-      v.potJvn?hv(pH(v.potJvn)):'',
-      v.potIvi?hv(pH(v.potIvi)):'',
-      tf?hv(tf):''];
-  });
-  if(!flightBody.length)flightBody=[['Aucun vol','','','','','','']];
-
-  doc.autoTable({
-    startY:topY,
-    head:[['Localisation','Simu','Jour','Nuit','JVN','VI/IFR','Total']],
-    body:flightBody,
-    styles:{fontSize:7.5,cellPadding:1.5,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7.5},
-    columnStyles:{0:{halign:'left',cellWidth:32},1:{cellWidth:12},2:{cellWidth:13},3:{cellWidth:13},4:{cellWidth:13},5:{cellWidth:14},6:{cellWidth:13}},
-    margin:{left:m,right:W-m-leftW},
-    theme:'grid'
-  });
-  var leftEnd=doc.lastAutoTable.finalY;
-
-  // Percées (droite)
-  doc.autoTable({
-    startY:topY,
-    head:[['Percées','Jour','Nuit']],
-    body:[
-      ['ILS',ni0(cur.ils),'—'],['VOR',ni0(cur.vor),'—'],
-      ['NDB',ni0(cur.ndb),'—'],['GCA',ni0(cur.gca),'—'],
-      ['SCA',ni0(cur.sca),'—'],['RNP',ni0(cur.rnp),'—'],
-    ],
-    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
-    columnStyles:{0:{halign:'left',cellWidth:22},1:{cellWidth:29},2:{cellWidth:29}},
-    margin:{left:rightX,right:m},
-    theme:'grid'
-  });
-  var ry=doc.lastAutoTable.finalY+2;
-
-  // Atterrissages
-  doc.autoTable({
-    startY:ry,
-    head:[['Atterrissages','Jour','Nuit']],
-    body:[['',ni0(cur.attJ),ni0(cur.attN)]],
-    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
-    columnStyles:{0:{halign:'left',cellWidth:22},1:{cellWidth:29},2:{cellWidth:29}},
-    margin:{left:rightX,right:m},
-    theme:'grid'
-  });
-  ry=doc.lastAutoTable.finalY+2;
-
-  // Appontages
-  doc.autoTable({
-    startY:ry,
-    head:[['Appontages','J1','J2','N1','N2']],
-    body:[['',ni0(cur.tagJ1),ni0(cur.tagJ2),ni0(cur.tagN1),ni0(cur.tagN2)]],
-    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
-    columnStyles:{0:{halign:'left',cellWidth:16},1:{cellWidth:16},2:{cellWidth:16},3:{cellWidth:16},4:{cellWidth:16}},
-    margin:{left:rightX,right:m},
-    theme:'grid'
-  });
-  ry=doc.lastAutoTable.finalY+2;
-
-  // Aérocordage
-  doc.autoTable({
-    startY:ry,
-    head:[['Aérocordage','Jour','Nuit']],
-    body:[
-      ['Sling',    ni0(cur.slingJ), ni0(cur.slingN)],
-      ['Rappel',   ni0(cur.rappelJ),ni0(cur.rappelN)],
-      ['Treuil',   ni0(cur.treuJ),  ni0(cur.treuN)],
-      ['Corde lisse',ni0(cur.cordeJ),ni0(cur.cordeN)],
-      ['Grappe',   ni0(cur.grappeJ),ni0(cur.grappeN)],
-      ['Nacelle',  ni0(cur.nacelleJ),ni0(cur.nacelleN)],
-    ],
-    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
-    columnStyles:{0:{halign:'left',cellWidth:28},1:{cellWidth:26},2:{cellWidth:26}},
-    margin:{left:rightX,right:m},
-    theme:'grid'
-  });
-  ry=doc.lastAutoTable.finalY;
-
-  y=Math.max(leftEnd,ry)+4;
-
-  // ── SYNTHÈSE PAR FONCTION ─────────────────────────────────────────
+  // ── Tableau par fonction ──────────────────────────────────────
   var foncsMap={};
   data.forEach(function(v){
     var f=v.fonction||'—';
-    if(!foncsMap[f])foncsMap[f]={j:0,n:0,jvn:0,ivi:0};
-    foncsMap[f].j+=pH(v.potJour);foncsMap[f].n+=pH(v.potNuit);
-    foncsMap[f].jvn+=pH(v.potJvn);foncsMap[f].ivi+=pH(v.potIvi);
+    if(!foncsMap[f])foncsMap[f]={j:0,n:0,jvn:0,ivi:0,perc:0,attJ:0,attN:0,app:0,aero:0};
+    var r=foncsMap[f];
+    r.j+=pH(v.potJour);r.n+=pH(v.potNuit);r.jvn+=pH(v.potJvn);r.ivi+=pH(v.potIvi);
+    r.perc+=n(v.ils)+n(v.vor)+n(v.ndb)+n(v.gca)+n(v.sca)+n(v.rnp);
+    r.attJ+=n(v.attJour);r.attN+=n(v.attNuit);
+    r.app+=n(v.tagJ1)+n(v.tagJ2)+n(v.tagN1)+n(v.tagN2);
+    r.aero+=n(v.slingJ)+n(v.slingN)+n(v.rappelJ)+n(v.rappelN)+n(v.treuJ)+n(v.treuN)
+           +n(v.cordeJ)+n(v.cordeN)+n(v.grappeJ)+n(v.grappeN)+n(v.nacelleJ)+n(v.nacelleN);
   });
+
   var synthBody=Object.keys(foncsMap).map(function(f){
-    var r=foncsMap[f],t=r.j+r.n;
-    return [f,'',hv0(r.j),hv0(r.n),hv0(r.jvn),hv0(r.ivi),hv0(t)];
+    var r=foncsMap[f];
+    return[f,'',hv(r.j),hv(r.n),hv(r.jvn),hv(r.ivi),ni0(r.perc),ni0(r.attJ),ni0(r.attN),ni0(r.app),ni0(r.aero)];
   });
-  if(simuTot>0)synthBody.push(['SIMU',hv0(simuTot),'','','','','']);
-  synthBody.push(['TOT',simuTot?hv0(simuTot):'',hv0(cur.j),hv0(cur.n),hv0(cur.jvn),hv0(cur.ivi),hv0(cur.j+cur.n)]);
-  var lastIdx=synthBody.length-1;
+  if(simuTot>0)synthBody.push(['SIMU',hv(simuTot),'','','','','','','','','']);
+  synthBody.push(['TOT',simuTot?hv(simuTot):'',hv(cur.j),hv(cur.n),hv(cur.jvn),hv(cur.ivi),ni0(cur.perc),ni0(cur.attJ),ni0(cur.attN),ni0(cur.app),ni0(cur.aero)]);
+  var lastSynthIdx=synthBody.length-1;
 
   doc.autoTable({
     startY:y,
-    head:[['Fonction','Simu','Jour','Nuit','JVN','VI/IFR','Total']],
+    head:[['Fonction','Simu','Jour','Nuit','JVN','VI/IFR','Percées','Att. Jour','Att. Nuit','Appontages','Aérocordage']],
     body:synthBody,
-    styles:{fontSize:8,cellPadding:2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:8},
-    columnStyles:{0:{halign:'left',cellWidth:30}},
-    margin:{left:m,right:m},
-    theme:'grid',
-    didParseCell:function(d){if(d.row.index===lastIdx){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
+    styles:tS, headStyles:tH,
+    columnStyles:{0:{halign:'left',cellWidth:30},1:{cellWidth:25},2:{cellWidth:25},3:{cellWidth:25},4:{cellWidth:25},5:{cellWidth:25},6:{cellWidth:25},7:{cellWidth:25},8:{cellWidth:25},9:{cellWidth:25},10:{cellWidth:25}},
+    margin:{left:m,right:m}, theme:'grid',
+    didParseCell:function(d){if(d.row.index===lastSynthIdx){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
   });
-  y=doc.lastAutoTable.finalY+3;
+  y=doc.lastAutoTable.finalY+4;
 
-  // ── TOTAUX ───────────────────────────────────────────────────────
+  // ── Tableau totaux ────────────────────────────────────────────
+  function tRow(lbl,s,sv){
+    return[lbl,sv!==undefined?hv(sv):'',hv(s.j),hv(s.n),hv(s.jvn),hv(s.ivi),ni0(s.perc),ni0(s.attJ),ni0(s.attN),ni0(s.app),ni0(s.aero)];
+  }
   doc.autoTable({
     startY:y,
-    head:[['','Simu','Jour','Nuit','JVN','VI/IFR','Total']],
+    head:[['Période','Simu','Jour','Nuit','JVN','VI/IFR','Percées','Att. Jour','Att. Nuit','Appontages','Aérocordage']],
     body:[
-      [pLabel,       simuTot?hv0(simuTot):'0', hv0(cur.j), hv0(cur.n), hv0(cur.jvn), hv0(cur.ivi), hv0(cur.j+cur.n)],
-      ['Total précédent','', hv0(prev.j),hv0(prev.n),hv0(prev.jvn),hv0(prev.ivi),hv0(prev.j+prev.n)],
-      ['TOTAL',      '',     hv0(tot.j), hv0(tot.n), hv0(tot.jvn), hv0(tot.ivi), hv0(tot.j+tot.n)],
+      tRow(pLabel,        cur,  simuTot),
+      tRow('Total précédent', prev, 0),
+      tRow('TOTAL CUMULÉ',    tot,  simuTotAll),
     ],
-    styles:{fontSize:8,cellPadding:2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:8},
-    columnStyles:{0:{halign:'left',cellWidth:35}},
-    margin:{left:m,right:m},
-    theme:'grid',
+    styles:tS, headStyles:tH,
+    columnStyles:{0:{halign:'left',cellWidth:30}},
+    margin:{left:m,right:m}, theme:'grid',
     didParseCell:function(d){if(d.row.index===2){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
   });
-  y=doc.lastAutoTable.finalY+5;
+  y=doc.lastAutoTable.finalY+7;
 
-  // ── SIGNATURES ──────────────────────────────────────────────────
-  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
+  // ── Signatures ────────────────────────────────────────────────
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
+  var col2=W/2+10;
   doc.text("L'intéressé :",m,y);
-  doc.text("L'autorité :",W/2+10,y);
-  doc.setDrawColor(140,140,140);
-  doc.line(m+22,y+10,m+65,y+10);
-  doc.line(W/2+32,y+10,W/2+75,y+10);
-  y+=16;
-  doc.setFontSize(7.5);doc.setFont('helvetica','italic');
+  doc.text("L'autorité :",col2,y);
+  doc.setDrawColor(130,130,130);
+  doc.line(m+27,y+13,m+85,y+13);
+  doc.line(col2+27,y+13,col2+85,y+13);
+  y+=20;
+  doc.setFontSize(8);doc.setFont('helvetica','italic');
   doc.text('Certifié conforme au registre journal des services aériens',W/2,y,{align:'center'});
-  y+=8;
 
-  // ── REGISTRE JOURNAL ─────────────────────────────────────────────
-  if(y>H-55){doc.addPage();y=m;}
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 2 — JOURNAL DÉTAILLÉ (saut de page forcé)
+  // ════════════════════════════════════════════════════════════════
+  doc.addPage();
+  y=m;
+
+  // Barre titre p2
   doc.setFillColor(7,16,31);
-  doc.rect(m,y,W-2*m,7,'F');
-  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('EXTRAIT DU REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+4.8,{align:'center'});
-  y+=9;
-  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
-  doc.text('Mois de : '+pLabel,m,y+4);
-  y+=7;
+  doc.rect(m,y,W-2*m,8,'F');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('JOURNAL DÉTAILLÉ DES VOLS — Période : '+pLabel,W/2,y+5.2,{align:'center'});
+  y+=10;
+
+  // Helper aérocordage
+  function ae(j,nv){var a=n(j),b=n(nv);if(!a&&!b)return'';if(a&&b)return a+'J/'+b+'N';return a?a+'J':b+'N';}
+
+  // Corps du journal (plus récent en dernier = data déjà trié asc)
+  var detailBody=data.map(function(v){
+    return[
+      fDate(v.date), v.type||'—', v.fonction||'', v.pilote||'', v.mission||'',
+      '',                                              // Simu (vol réel → vide)
+      hve(pH(v.potJour)), hve(pH(v.potNuit)), hve(pH(v.potJvn)), hve(pH(v.potIvi)),
+      ni(n(v.ils)), ni(n(v.vor)), ni(n(v.ndb)), ni(n(v.gca)), ni(n(v.sca)), ni(n(v.rnp)),
+      ni(n(v.attJour)), ni(n(v.attNuit)),
+      ni(n(v.tagJ1)), ni(n(v.tagJ2)), ni(n(v.tagN1)), ni(n(v.tagN2)),
+      ae(v.slingJ,v.slingN), ae(v.rappelJ,v.rappelN), ae(v.treuJ,v.treuN),
+      ae(v.cordeJ,v.cordeN), ae(v.grappeJ,v.grappeN), ae(v.nacelleJ,v.nacelleN)
+    ];
+  });
+  // Ligne de total
+  detailBody.push([
+    'TOTAL','','','','',
+    hv(simuTot), hv(cur.j), hv(cur.n), hv(cur.jvn), hv(cur.ivi),
+    ni0(cur.ils), ni0(cur.vor), ni0(cur.ndb), ni0(cur.gca), ni0(cur.sca), ni0(cur.rnp),
+    ni0(cur.attJ), ni0(cur.attN),
+    ni0(cur.tagJ1), ni0(cur.tagJ2), ni0(cur.tagN1), ni0(cur.tagN2),
+    ni0(cur.slingJ+cur.slingN), ni0(cur.rappelJ+cur.rappelN), ni0(cur.treuJ+cur.treuN),
+    ni0(cur.cordeJ+cur.cordeN), ni0(cur.grappeJ+cur.grappeN), ni0(cur.nacelleJ+cur.nacelleN)
+  ]);
+  var lastDetailIdx=detailBody.length-1;
 
   doc.autoTable({
     startY:y,
-    head:[['Date','Appareil','Fonc.','Pilote','Mission','Sling','Rappel','Treuil','Corde','Grappe','Nacelle']],
-    body:data.slice().reverse().map(function(v){
-      function ae(j,nv){var a=n(j),b=n(nv);if(!a&&!b)return'';return(a?a+'J':'')+(b?'/'+b+'N':'');}
-      return [fDate(v.date),v.type||'—',v.fonction||'',v.pilote||'',v.mission||'',
-        ae(v.slingJ,v.slingN),ae(v.rappelJ,v.rappelN),ae(v.treuJ,v.treuN),
-        ae(v.cordeJ,v.cordeN),ae(v.grappeJ,v.grappeN),ae(v.nacelleJ,v.nacelleN)];
-    }),
-    styles:{fontSize:7,cellPadding:1.5,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
-    columnStyles:{0:{cellWidth:20,halign:'left'},1:{cellWidth:16},2:{cellWidth:11},3:{cellWidth:28,halign:'left'},4:{cellWidth:42,halign:'left'},5:{cellWidth:10},6:{cellWidth:10},7:{cellWidth:10},8:{cellWidth:10},9:{cellWidth:10},10:{cellWidth:10}},
-    margin:{left:m,right:m},
-    theme:'grid'
+    head:[['Date','Appareil','Fonc.','Pilote','Mission',
+           'Simu','Jour','Nuit','JVN','VI/IFR',
+           'ILS','VOR','NDB','GCA','SCA','RNP',
+           'Att.J','Att.N','J1','J2','N1','N2',
+           'Sling','Rappel','Treuil','Corde','Grappe','Nacelle']],
+    body:detailBody,
+    styles:{fontSize:6.5,cellPadding:1.2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[155,155,155],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6.5},
+    columnStyles:{
+      0:{cellWidth:17,halign:'left'}, // Date
+      1:{cellWidth:13},               // Appareil
+      2:{cellWidth:9},                // Fonc
+      3:{cellWidth:20,halign:'left'}, // Pilote
+      4:{cellWidth:22,halign:'left'}, // Mission
+      5:{cellWidth:8},                // Simu
+      6:{cellWidth:8},                // Jour
+      7:{cellWidth:8},                // Nuit
+      8:{cellWidth:8},                // JVN
+      9:{cellWidth:8},                // VI/IFR
+      10:{cellWidth:6},               // ILS
+      11:{cellWidth:6},               // VOR
+      12:{cellWidth:6},               // NDB
+      13:{cellWidth:6},               // GCA
+      14:{cellWidth:6},               // SCA
+      15:{cellWidth:6},               // RNP
+      16:{cellWidth:8},               // Att.J
+      17:{cellWidth:8},               // Att.N
+      18:{cellWidth:7},               // J1
+      19:{cellWidth:7},               // J2
+      20:{cellWidth:7},               // N1
+      21:{cellWidth:7},               // N2
+      22:{cellWidth:12},              // Sling
+      23:{cellWidth:12},              // Rappel
+      24:{cellWidth:12},              // Treuil
+      25:{cellWidth:12},              // Corde
+      26:{cellWidth:12},              // Grappe
+      27:{cellWidth:12},              // Nacelle
+    },
+    margin:{left:m,right:m}, theme:'grid',
+    didParseCell:function(d){if(d.row.index===lastDetailIdx){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
   });
 
   // Numéros de page
   var pages=doc.internal.getNumberOfPages();
   for(var i=1;i<=pages;i++){
     doc.setPage(i);
-    doc.setFontSize(6.5);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+    doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
     doc.text('CarnetVol — Page '+i+'/'+pages,W/2,H-3,{align:'center'});
   }
   doc.save('RegistreServices_'+pLabel.replace(/ /g,'_').replace(/\//g,'-')+'_'+new Date().toISOString().split('T')[0]+'.pdf');
