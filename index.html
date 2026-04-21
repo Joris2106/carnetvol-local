@@ -146,12 +146,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
 .stats-panel.active{display:block}
 
 /* FILTRES STATS */
-.filters-bar{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 11px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:4}
+.filters-bar{background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:4}
+.filters-toggle{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.filters-toggle-left{display:flex;align-items:center;gap:7px}
+.filters-toggle-lbl{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
+.filters-active-badge{background:var(--accent);color:#000;font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;display:none}
+.filters-active-badge.on{display:inline-block}
+.filters-arrow{font-size:10px;color:var(--text3);transition:transform .2s}
+.filters-arrow.open{transform:rotate(180deg)}
+.filters-period{display:flex;align-items:center;gap:6px}
+.filters-period input[type=date]{background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:3px 6px;outline:none;color-scheme:dark;width:118px}
+.filters-body{display:none;grid-template-columns:1fr 1fr;gap:5px;padding:0 11px 9px}
+.filters-body.open{display:grid}
 .filter-item{display:flex;flex-direction:column;gap:3px}
 .filter-lbl{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3)}
 .filter-item select{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:6px 8px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer}
 .filter-item select option{background:var(--panel2)}
-.filter-info{padding:6px 11px 0;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;color:var(--accent)}
+.filter-info{padding:2px 11px 4px;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;color:var(--accent)}
 .filter-info.hidden{display:none}
 .stats-body{padding:11px;display:flex;flex-direction:column;gap:0}
 .stitle{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:7px;margin-top:13px}
@@ -542,22 +553,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
   <!-- Panel Stats Vols -->
   <div class="stats-panel active" id="sp-vols">
     <div class="filters-bar" id="vfb">
-      <div class="filter-item"><div class="filter-lbl">Type</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-type',this)">Tous</button><div class="msd-dropdown" id="dd-vs-type"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Année</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-year',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-year"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Mois</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-month',this)">Tous</button><div class="msd-dropdown" id="dd-vs-month"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Fonction</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-fonction',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-fonction"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Pilote</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-pilote',this)">Tous</button><div class="msd-dropdown" id="dd-vs-pilote"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Lieu</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-lieu',this)">Tous</button><div class="msd-dropdown" id="dd-vs-lieu"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Mission</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-mission',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-mission"></div></div></div>
-      <div class="filter-item" style="grid-column:1/-1">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">📅 Période</span>
-          <input type="date" id="vs-from" onchange="renderStatsVols()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
-          <span style="font-size:11px;color:var(--text3)">→</span>
-          <input type="date" id="vs-to" onchange="renderStatsVols()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
+      <div class="filters-toggle" onclick="toggleFiltersBar('vfb')">
+        <div class="filters-toggle-left">
+          <span class="filters-toggle-lbl">🔽 Filtres</span>
+          <span class="filters-active-badge" id="vfb-badge">0</span>
+          <div class="filters-period" onclick="event.stopPropagation()">
+            <input type="date" id="vs-from" onchange="renderStatsVols()" placeholder="Du">
+            <span style="font-size:10px;color:var(--text3)">→</span>
+            <input type="date" id="vs-to" onchange="renderStatsVols()" placeholder="Au">
+          </div>
         </div>
+        <span class="filters-arrow" id="vfb-arrow">▾</span>
       </div>
-      <button class="filter-reset" onclick="resetStatsVols()" style="grid-column:1/-1">✕ Effacer filtres</button>
+      <div class="filters-body" id="vfb-body">
+        <div class="filter-item"><div class="filter-lbl">Type</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-type',this)">Tous</button><div class="msd-dropdown" id="dd-vs-type"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Année</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-year',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-year"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Mois</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-month',this)">Tous</button><div class="msd-dropdown" id="dd-vs-month"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Fonction</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-fonction',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-fonction"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Pilote</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-pilote',this)">Tous</button><div class="msd-dropdown" id="dd-vs-pilote"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Lieu</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-lieu',this)">Tous</button><div class="msd-dropdown" id="dd-vs-lieu"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Mission</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-mission',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-mission"></div></div></div>
+        <button class="filter-reset" onclick="resetStatsVols()" style="grid-column:1/-1;margin-top:2px">✕ Effacer filtres</button>
+      </div>
     </div>
     <div id="vs-info" class="filter-info hidden"></div>
     <div class="stats-body" id="sv-body">
@@ -575,21 +592,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
   <!-- Panel Stats Simus -->
   <div class="stats-panel" id="sp-simus">
     <div class="filters-bar">
-      <div class="filter-item"><div class="filter-lbl">Machine</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-machine',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-machine"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Année</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-year',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-year"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Mois</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-month',this)">Tous</button><div class="msd-dropdown" id="dd-ss-month"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Fonction</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-fonction',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-fonction"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Pilote</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-pilote',this)">Tous</button><div class="msd-dropdown" id="dd-ss-pilote"></div></div></div>
-      <div class="filter-item"><div class="filter-lbl">Mission</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-mission',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-mission"></div></div></div>
-      <div class="filter-item" style="grid-column:1/-1">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">📅 Période</span>
-          <input type="date" id="ss-from" onchange="renderStatsSimus()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
-          <span style="font-size:11px;color:var(--text3)">→</span>
-          <input type="date" id="ss-to" onchange="renderStatsSimus()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
+      <div class="filters-toggle" onclick="toggleFiltersBar('sfb')">
+        <div class="filters-toggle-left">
+          <span class="filters-toggle-lbl">🔽 Filtres</span>
+          <span class="filters-active-badge" id="sfb-badge">0</span>
+          <div class="filters-period" onclick="event.stopPropagation()">
+            <input type="date" id="ss-from" onchange="renderStatsSimus()" placeholder="Du">
+            <span style="font-size:10px;color:var(--text3)">→</span>
+            <input type="date" id="ss-to" onchange="renderStatsSimus()" placeholder="Au">
+          </div>
         </div>
+        <span class="filters-arrow" id="sfb-arrow">▾</span>
       </div>
-      <button class="filter-reset" onclick="resetStatsSimus()" style="grid-column:1/-1">✕ Effacer filtres</button>
+      <div class="filters-body" id="sfb-body">
+        <div class="filter-item"><div class="filter-lbl">Machine</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-machine',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-machine"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Année</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-year',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-year"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Mois</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-month',this)">Tous</button><div class="msd-dropdown" id="dd-ss-month"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Fonction</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-fonction',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-fonction"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Pilote</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-pilote',this)">Tous</button><div class="msd-dropdown" id="dd-ss-pilote"></div></div></div>
+        <div class="filter-item"><div class="filter-lbl">Mission</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-mission',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-mission"></div></div></div>
+        <button class="filter-reset" onclick="resetStatsSimus()" style="grid-column:1/-1;margin-top:2px">✕ Effacer filtres</button>
+      </div>
     </div>
     <div id="ss-info" class="filter-info hidden"></div>
     <div class="stats-body">
@@ -1254,6 +1277,25 @@ function delSimu(id){
 
 // ══ STATS ══════════════════════════════════════════════════════════
 var curStatTab='vols';
+function toggleFiltersBar(id){
+  var body=document.getElementById(id+'-body');
+  var arrow=document.getElementById(id+'-arrow');
+  if(!body)return;
+  var open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  if(arrow)arrow.classList.toggle('open',!open);
+}
+function updateFilterBadge(badgeId, msdIds, fromId, toId){
+  var badge=document.getElementById(badgeId);
+  if(!badge)return;
+  var n=0;
+  msdIds.forEach(function(id){if(msdHas(id))n++;});
+  var f=(document.getElementById(fromId)||{}).value||'';
+  var t=(document.getElementById(toId)||{}).value||'';
+  if(f||t)n++;
+  badge.textContent=n;
+  badge.classList.toggle('on',n>0);
+}
 function resetStatsVols(){
   ['vs-type','vs-fonction','vs-pilote','vs-lieu','vs-mission','vs-year','vs-month'].forEach(msdReset);
   var f=document.getElementById('vs-from'),t=document.getElementById('vs-to');
@@ -1348,7 +1390,7 @@ function renderStatsVols(){
   var inf=document.getElementById('vs-info');
   if(parts.length){inf.textContent='🔍 '+parts.join(' · ')+' — '+filt.length+' vol'+(filt.length>1?'s':'');inf.classList.remove('hidden');}
   else inf.classList.add('hidden');
-  renderStatBlocks(computeStats(filt),'');
+  updateFilterBadge('vfb-badge',['vs-type','vs-fonction','vs-pilote','vs-lieu','vs-mission','vs-year','vs-month'],'vs-from','vs-to');
   var machines={};
   filt.forEach(function(v){var k=v.type||'?';if(!machines[k])machines[k]={n:k,m:0,c:0};machines[k].m+=pH(v.potJour)+pH(v.potNuit);machines[k].c++;});
   var rows=Object.values(machines).sort(function(a,b){return b.m-a.m;});
@@ -1384,7 +1426,7 @@ function renderStatsSimus(){
   var inf=document.getElementById('ss-info');
   if(parts.length){inf.textContent='🔍 '+parts.join(' · ')+' — '+filt.length+' séance'+(filt.length>1?'s':'');inf.classList.remove('hidden');}
   else inf.classList.add('hidden');
-  renderStatBlocks(computeStats(filt),'simu-');
+  updateFilterBadge('sfb-badge',['ss-machine','ss-fonction','ss-pilote','ss-mission','ss-year','ss-month'],'ss-from','ss-to');
   var machines={};
   filt.forEach(function(s){var k=s.machine||'?';if(!machines[k])machines[k]={n:k,m:0,c:0};machines[k].m+=pH(s.potJour)+pH(s.potNuit);machines[k].c++;});
   var rows=Object.values(machines).sort(function(a,b){return b.m-a.m;});
@@ -1715,256 +1757,202 @@ function computeByKey(data, key, label){
 
 function exportPdfVols(){
   var {jsPDF}=window.jspdf;
-  // Paysage A4 : 297×210mm
   var doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-  var W=297, H=210, m=8;
+  var W=297, H=210, m=7;
 
-  // ── Données ────────────────────────────────────────────────────
   var data=getStatsFilteredVols(); // triés par date asc
-  var dataIds={};
-  data.forEach(function(v){dataIds[v.id]=1;});
-  var allVols=vols.slice().sort(function(a,b){return(a.date||'').localeCompare(b.date||'');});
-  var prevVols=allVols.filter(function(v){return !dataIds[v.id];});
-  var vsFrom=(document.getElementById('vs-from')||{}).value||'';
-  var vsTo  =(document.getElementById('vs-to')||{}).value||'';
-  var simuFilt=simus.filter(function(s){
-    if(vsFrom&&s.date&&s.date<vsFrom)return false;
-    if(vsTo  &&s.date&&s.date>vsTo)  return false;
-    return true;
-  });
-
-  // ── Calculs ────────────────────────────────────────────────────
-  function sumS(arr){
-    var r={j:0,n:0,jvn:0,ivi:0,attJ:0,attN:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,
-      slingJ:0,slingN:0,rappelJ:0,rappelN:0,treuJ:0,treuN:0,
-      cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0,
-      tagJ1:0,tagJ2:0,tagN1:0,tagN2:0};
-    arr.forEach(function(v){
-      r.j+=pH(v.potJour);r.n+=pH(v.potNuit);r.jvn+=pH(v.potJvn);r.ivi+=pH(v.potIvi);
-      r.attJ+=n(v.attJour);r.attN+=n(v.attNuit);
-      r.ils+=n(v.ils);r.vor+=n(v.vor);r.ndb+=n(v.ndb);r.gca+=n(v.gca);r.sca+=n(v.sca);r.rnp+=n(v.rnp);
-      r.slingJ+=n(v.slingJ);r.slingN+=n(v.slingN);r.rappelJ+=n(v.rappelJ);r.rappelN+=n(v.rappelN);
-      r.treuJ+=n(v.treuJ);r.treuN+=n(v.treuN);r.cordeJ+=n(v.cordeJ);r.cordeN+=n(v.cordeN);
-      r.grappeJ+=n(v.grappeJ);r.grappeN+=n(v.grappeN);r.nacelleJ+=n(v.nacelleJ);r.nacelleN+=n(v.nacelleN);
-      r.tagJ1+=n(v.tagJ1);r.tagJ2+=n(v.tagJ2);r.tagN1+=n(v.tagN1);r.tagN2+=n(v.tagN2);
-    });
-    r.perc=r.ils+r.vor+r.ndb+r.gca+r.sca+r.rnp;
-    r.app =r.tagJ1+r.tagJ2+r.tagN1+r.tagN2;
-    r.aero=r.slingJ+r.slingN+r.rappelJ+r.rappelN+r.treuJ+r.treuN
-          +r.cordeJ+r.cordeN+r.grappeJ+r.grappeN+r.nacelleJ+r.nacelleN;
-    return r;
-  }
-  var cur=sumS(data), prev=sumS(prevVols), tot=sumS(allVols);
-  var simuTot=0;
-  simuFilt.forEach(function(s){simuTot+=pH(s.potJour)+pH(s.potNuit);});
-  var simuTotAll=simus.reduce(function(acc,s){return acc+pH(s.potJour)+pH(s.potNuit);},0);
-
-  // ── Période ────────────────────────────────────────────────────
-  var MS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
-  function mLbl(d){if(!d)return'—';var p=d.split('-');return MS[parseInt(p[1])-1]+'-'+p[0].slice(2);}
-  var d0=data.length?data[0].date:'', d1=data.length?data[data.length-1].date:'';
-  var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' — '+fDate(d1);
-
-  // ── Formatage ──────────────────────────────────────────────────
-  function hv(v){return String(parseFloat(v.toFixed(1)));}
-  function hve(v){var r=parseFloat(v.toFixed(1));return r?String(r):'';}
-  function ni(v){return v?String(v):'';}
-  function ni0(v){return String(v);}
 
   // Profil
   var profil={};
   try{profil=JSON.parse(localStorage.getItem('cv_profil')||'{}');}catch(e){}
 
-  // Styles communs
-  var tS={fontSize:8,cellPadding:2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[155,155,155],lineWidth:0.2};
-  var tH={fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:8};
+  // Période label
+  var MS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  function mLbl(d){if(!d)return'—';var p=d.split('-');return MS[parseInt(p[1])-1]+'-'+p[0].slice(2);}
+  var d0=data.length?data[0].date:'', d1=data.length?data[data.length-1].date:'';
+  var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' → '+fDate(d1);
+
+  // Formatage
+  function hve(v){var r=parseFloat((+v).toFixed(1));return r?String(r):'';}
+  function nv(v){return v?String(v):'';}
+
+  // Styles communs tableaux
+  var baseS={fontSize:6.5,cellPadding:1.2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[150,150,150],lineWidth:0.2};
+  var headS={fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6.5};
+
+  // Colonnes de données (en-têtes courts)
+  var dataCols=['Jour','Nuit','JVN','VI/IFR',
+    'ILS','VOR','NDB','GCA','SCA','RNP',
+    'Att.J','Att.N',
+    'J1','J2','N1','N2',
+    'Sling J','Sling N','Treuil J','Treuil N','Rappel J','Rappel N',
+    'Corde J','Corde N','Grappe J','Grappe N','Nacelle J','Nacelle N'];
+
+  // Extraction d'une ligne de données à partir d'un objet vol (ou somme)
+  function rowData(v){
+    return [
+      hve(pH(v.potJour||0)), hve(pH(v.potNuit||0)), hve(pH(v.potJvn||0)), hve(pH(v.potIvi||0)),
+      nv(n(v.ils)), nv(n(v.vor)), nv(n(v.ndb)), nv(n(v.gca)), nv(n(v.sca)), nv(n(v.rnp)),
+      nv(n(v.attJour)), nv(n(v.attNuit)),
+      nv(n(v.tagJ1)), nv(n(v.tagJ2)), nv(n(v.tagN1)), nv(n(v.tagN2)),
+      nv(n(v.slingJ)), nv(n(v.slingN)), nv(n(v.treuJ)), nv(n(v.treuN)),
+      nv(n(v.rappelJ)), nv(n(v.rappelN)),
+      nv(n(v.cordeJ)), nv(n(v.cordeN)),
+      nv(n(v.grappeJ)), nv(n(v.grappeN)),
+      nv(n(v.nacelleJ)), nv(n(v.nacelleN))
+    ];
+  }
+
+  // Calcul totaux par fonction
+  function sumByFonc(arr){
+    var map={};
+    arr.forEach(function(v){
+      var f=v.fonction||'—';
+      if(!map[f])map[f]={potJour:0,potNuit:0,potJvn:0,potIvi:0,
+        ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,
+        attJour:0,attNuit:0,tagJ1:0,tagJ2:0,tagN1:0,tagN2:0,
+        slingJ:0,slingN:0,treuJ:0,treuN:0,rappelJ:0,rappelN:0,
+        cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0};
+      var r=map[f];
+      r.potJour+=pH(v.potJour);r.potNuit+=pH(v.potNuit);r.potJvn+=pH(v.potJvn);r.potIvi+=pH(v.potIvi);
+      r.ils+=n(v.ils);r.vor+=n(v.vor);r.ndb+=n(v.ndb);r.gca+=n(v.gca);r.sca+=n(v.sca);r.rnp+=n(v.rnp);
+      r.attJour+=n(v.attJour);r.attNuit+=n(v.attNuit);
+      r.tagJ1+=n(v.tagJ1);r.tagJ2+=n(v.tagJ2);r.tagN1+=n(v.tagN1);r.tagN2+=n(v.tagN2);
+      r.slingJ+=n(v.slingJ);r.slingN+=n(v.slingN);r.treuJ+=n(v.treuJ);r.treuN+=n(v.treuN);
+      r.rappelJ+=n(v.rappelJ);r.rappelN+=n(v.rappelN);
+      r.cordeJ+=n(v.cordeJ);r.cordeN+=n(v.cordeN);
+      r.grappeJ+=n(v.grappeJ);r.grappeN+=n(v.grappeN);
+      r.nacelleJ+=n(v.nacelleJ);r.nacelleN+=n(v.nacelleN);
+    });
+    return map;
+  }
+
+  // Largeurs colonnes : fonction 22mm + 28 colonnes de données
+  // Total utile : 297 - 2*7 = 283mm. Fonction = 22. Reste = 261 / 28 = 9.32
+  var fnW=22, dcW=9.3;
+  var colStyles={0:{halign:'left',cellWidth:fnW}};
+  for(var ci=1;ci<=28;ci++)colStyles[ci]={cellWidth:dcW};
 
   // ════════════════════════════════════════════════════════════════
-  // PAGE 1 — SYNTHÈSE
+  // PAGE 1 — SYNTHÈSE PAR FONCTION
   // ════════════════════════════════════════════════════════════════
   var y=m;
 
   // Barre titre
   doc.setFillColor(7,16,31);
   doc.rect(m,y,W-2*m,9,'F');
-  doc.setFontSize(11.5);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+6,{align:'center'});
+  doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+6.2,{align:'center'});
   y+=11;
 
-  // Bandeau pilote
+  // Bandeau pilote 4 champs
   doc.setFillColor(215,228,248);
-  doc.rect(m,y,W-2*m,7,'FD');
-  doc.setFontSize(9.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  doc.rect(m,y,W-2*m,8,'FD');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
   var cw=(W-2*m)/4;
   [['GRADE',profil.grade||''],['NOM',profil.nom||''],['PRÉNOM',profil.prenom||''],['BREVET',profil.brevet||'']
-  ].forEach(function(pair,i){doc.text(pair[0]+' : '+pair[1],m+3+i*cw,y+4.8);});
-  y+=9;
+  ].forEach(function(p,i){doc.text(p[0]+' : '+p[1],m+4+i*cw,y+5.2);});
+  y+=10;
 
   // Période
-  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
-  doc.text('Période : '+pLabel,m,y+4.5);
-  y+=8;
+  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  doc.text('Période : '+pLabel,m,y+4);
+  y+=7;
 
-  // ── Tableau par fonction ──────────────────────────────────────
-  var foncsMap={};
+  // Tableau par fonction
+  var foncsMap=sumByFonc(data);
+  var foncs=Object.keys(foncsMap);
+
+  // Ligne TOT = somme de tous les vols
+  var tot=sumByFonc(data)['__tot__']||{potJour:0,potNuit:0,potJvn:0,potIvi:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,attJour:0,attNuit:0,tagJ1:0,tagJ2:0,tagN1:0,tagN2:0,slingJ:0,slingN:0,treuJ:0,treuN:0,rappelJ:0,rappelN:0,cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0};
   data.forEach(function(v){
-    var f=v.fonction||'—';
-    if(!foncsMap[f])foncsMap[f]={j:0,n:0,jvn:0,ivi:0,perc:0,attJ:0,attN:0,app:0,aero:0};
-    var r=foncsMap[f];
-    r.j+=pH(v.potJour);r.n+=pH(v.potNuit);r.jvn+=pH(v.potJvn);r.ivi+=pH(v.potIvi);
-    r.perc+=n(v.ils)+n(v.vor)+n(v.ndb)+n(v.gca)+n(v.sca)+n(v.rnp);
-    r.attJ+=n(v.attJour);r.attN+=n(v.attNuit);
-    r.app+=n(v.tagJ1)+n(v.tagJ2)+n(v.tagN1)+n(v.tagN2);
-    r.aero+=n(v.slingJ)+n(v.slingN)+n(v.rappelJ)+n(v.rappelN)+n(v.treuJ)+n(v.treuN)
-           +n(v.cordeJ)+n(v.cordeN)+n(v.grappeJ)+n(v.grappeN)+n(v.nacelleJ)+n(v.nacelleN);
+    tot.potJour+=pH(v.potJour);tot.potNuit+=pH(v.potNuit);tot.potJvn+=pH(v.potJvn);tot.potIvi+=pH(v.potIvi);
+    tot.ils+=n(v.ils);tot.vor+=n(v.vor);tot.ndb+=n(v.ndb);tot.gca+=n(v.gca);tot.sca+=n(v.sca);tot.rnp+=n(v.rnp);
+    tot.attJour+=n(v.attJour);tot.attNuit+=n(v.attNuit);
+    tot.tagJ1+=n(v.tagJ1);tot.tagJ2+=n(v.tagJ2);tot.tagN1+=n(v.tagN1);tot.tagN2+=n(v.tagN2);
+    tot.slingJ+=n(v.slingJ);tot.slingN+=n(v.slingN);tot.treuJ+=n(v.treuJ);tot.treuN+=n(v.treuN);
+    tot.rappelJ+=n(v.rappelJ);tot.rappelN+=n(v.rappelN);
+    tot.cordeJ+=n(v.cordeJ);tot.cordeN+=n(v.cordeN);
+    tot.grappeJ+=n(v.grappeJ);tot.grappeN+=n(v.grappeN);
+    tot.nacelleJ+=n(v.nacelleJ);tot.nacelleN+=n(v.nacelleN);
   });
 
-  var synthBody=Object.keys(foncsMap).map(function(f){
-    var r=foncsMap[f];
-    return[f,'',hv(r.j),hv(r.n),hv(r.jvn),hv(r.ivi),ni0(r.perc),ni0(r.attJ),ni0(r.attN),ni0(r.app),ni0(r.aero)];
-  });
-  if(simuTot>0)synthBody.push(['SIMU',hv(simuTot),'','','','','','','','','']);
-  synthBody.push(['TOT',simuTot?hv(simuTot):'',hv(cur.j),hv(cur.n),hv(cur.jvn),hv(cur.ivi),ni0(cur.perc),ni0(cur.attJ),ni0(cur.attN),ni0(cur.app),ni0(cur.aero)]);
-  var lastSynthIdx=synthBody.length-1;
+  var synthBody=foncs.map(function(f){return [f].concat(rowData(foncsMap[f]));});
+  synthBody.push(['TOT'].concat(rowData(tot)));
+  var lastSynth=synthBody.length-1;
 
   doc.autoTable({
     startY:y,
-    head:[['Fonction','Simu','Jour','Nuit','JVN','VI/IFR','Percées','Att. Jour','Att. Nuit','Appontages','Aérocordage']],
+    head:[['Fonction'].concat(dataCols)],
     body:synthBody,
-    styles:tS, headStyles:tH,
-    columnStyles:{0:{halign:'left',cellWidth:30},1:{cellWidth:25},2:{cellWidth:25},3:{cellWidth:25},4:{cellWidth:25},5:{cellWidth:25},6:{cellWidth:25},7:{cellWidth:25},8:{cellWidth:25},9:{cellWidth:25},10:{cellWidth:25}},
+    styles:baseS, headStyles:headS, columnStyles:colStyles,
     margin:{left:m,right:m}, theme:'grid',
-    didParseCell:function(d){if(d.row.index===lastSynthIdx){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
+    didParseCell:function(d){
+      if(d.row.index===lastSynth){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}
+    }
   });
-  y=doc.lastAutoTable.finalY+4;
+  y=doc.lastAutoTable.finalY+8;
 
-  // ── Tableau totaux ────────────────────────────────────────────
-  function tRow(lbl,s,sv){
-    return[lbl,sv!==undefined?hv(sv):'',hv(s.j),hv(s.n),hv(s.jvn),hv(s.ivi),ni0(s.perc),ni0(s.attJ),ni0(s.attN),ni0(s.app),ni0(s.aero)];
-  }
-  doc.autoTable({
-    startY:y,
-    head:[['Période','Simu','Jour','Nuit','JVN','VI/IFR','Percées','Att. Jour','Att. Nuit','Appontages','Aérocordage']],
-    body:[
-      tRow(pLabel,        cur,  simuTot),
-      tRow('Total précédent', prev, 0),
-      tRow('TOTAL CUMULÉ',    tot,  simuTotAll),
-    ],
-    styles:tS, headStyles:tH,
-    columnStyles:{0:{halign:'left',cellWidth:30}},
-    margin:{left:m,right:m}, theme:'grid',
-    didParseCell:function(d){if(d.row.index===2){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
-  });
-  y=doc.lastAutoTable.finalY+7;
-
-  // ── Signatures ────────────────────────────────────────────────
+  // Signatures
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
-  var col2=W/2+10;
   doc.text("L'intéressé :",m,y);
-  doc.text("L'autorité :",col2,y);
+  doc.text("L'autorité :",W/2+20,y);
   doc.setDrawColor(130,130,130);
-  doc.line(m+27,y+13,m+85,y+13);
-  doc.line(col2+27,y+13,col2+85,y+13);
+  doc.line(m+28,y+13,m+90,y+13);
+  doc.line(W/2+48,y+13,W/2+110,y+13);
   y+=20;
   doc.setFontSize(8);doc.setFont('helvetica','italic');
   doc.text('Certifié conforme au registre journal des services aériens',W/2,y,{align:'center'});
 
   // ════════════════════════════════════════════════════════════════
-  // PAGE 2 — JOURNAL DÉTAILLÉ (saut de page forcé)
+  // PAGE 2 — VOLS DÉTAILLÉS (saut de page forcé)
   // ════════════════════════════════════════════════════════════════
   doc.addPage();
   y=m;
 
-  // Barre titre p2
   doc.setFillColor(7,16,31);
   doc.rect(m,y,W-2*m,8,'F');
   doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('JOURNAL DÉTAILLÉ DES VOLS — Période : '+pLabel,W/2,y+5.2,{align:'center'});
+  doc.text('JOURNAL DES VOLS — '+pLabel,W/2,y+5.2,{align:'center'});
   y+=10;
 
-  // Helper aérocordage
-  function ae(j,nv){var a=n(j),b=n(nv);if(!a&&!b)return'';if(a&&b)return a+'J/'+b+'N';return a?a+'J':b+'N';}
-
-  // Corps du journal (plus récent en dernier = data déjà trié asc)
+  // Corps : 1 ligne par vol (ordre chrono asc = plus récent en dernier)
   var detailBody=data.map(function(v){
-    return[
-      fDate(v.date), v.type||'—', v.fonction||'', v.pilote||'', v.mission||'',
-      '',                                              // Simu (vol réel → vide)
-      hve(pH(v.potJour)), hve(pH(v.potNuit)), hve(pH(v.potJvn)), hve(pH(v.potIvi)),
-      ni(n(v.ils)), ni(n(v.vor)), ni(n(v.ndb)), ni(n(v.gca)), ni(n(v.sca)), ni(n(v.rnp)),
-      ni(n(v.attJour)), ni(n(v.attNuit)),
-      ni(n(v.tagJ1)), ni(n(v.tagJ2)), ni(n(v.tagN1)), ni(n(v.tagN2)),
-      ae(v.slingJ,v.slingN), ae(v.rappelJ,v.rappelN), ae(v.treuJ,v.treuN),
-      ae(v.cordeJ,v.cordeN), ae(v.grappeJ,v.grappeN), ae(v.nacelleJ,v.nacelleN)
-    ];
+    return [fDate(v.date)+' '+( v.type||'')+(v.fonction?' ('+v.fonction+')':'')+(v.pilote?' — '+v.pilote:'')+(v.mission?' '+v.mission:'')]
+      .concat(rowData(v));
   });
-  // Ligne de total
-  detailBody.push([
-    'TOTAL','','','','',
-    hv(simuTot), hv(cur.j), hv(cur.n), hv(cur.jvn), hv(cur.ivi),
-    ni0(cur.ils), ni0(cur.vor), ni0(cur.ndb), ni0(cur.gca), ni0(cur.sca), ni0(cur.rnp),
-    ni0(cur.attJ), ni0(cur.attN),
-    ni0(cur.tagJ1), ni0(cur.tagJ2), ni0(cur.tagN1), ni0(cur.tagN2),
-    ni0(cur.slingJ+cur.slingN), ni0(cur.rappelJ+cur.rappelN), ni0(cur.treuJ+cur.treuN),
-    ni0(cur.cordeJ+cur.cordeN), ni0(cur.grappeJ+cur.grappeN), ni0(cur.nacelleJ+cur.nacelleN)
-  ]);
-  var lastDetailIdx=detailBody.length-1;
+  detailBody.push(['TOTAL'].concat(rowData(tot)));
+  var lastDetail=detailBody.length-1;
+
+  // Colonne 0 plus large pour la description du vol
+  var colStyles2={0:{halign:'left',cellWidth:38}};
+  for(var cj=1;cj<=28;cj++)colStyles2[cj]={cellWidth:(W-2*m-38)/28};
 
   doc.autoTable({
     startY:y,
-    head:[['Date','Appareil','Fonc.','Pilote','Mission',
-           'Simu','Jour','Nuit','JVN','VI/IFR',
-           'ILS','VOR','NDB','GCA','SCA','RNP',
-           'Att.J','Att.N','J1','J2','N1','N2',
-           'Sling','Rappel','Treuil','Corde','Grappe','Nacelle']],
+    head:[['Date / Appareil / Pilote / Mission'].concat(dataCols)],
     body:detailBody,
-    styles:{fontSize:6.5,cellPadding:1.2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[155,155,155],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6.5},
-    columnStyles:{
-      0:{cellWidth:17,halign:'left'}, // Date
-      1:{cellWidth:13},               // Appareil
-      2:{cellWidth:9},                // Fonc
-      3:{cellWidth:20,halign:'left'}, // Pilote
-      4:{cellWidth:22,halign:'left'}, // Mission
-      5:{cellWidth:8},                // Simu
-      6:{cellWidth:8},                // Jour
-      7:{cellWidth:8},                // Nuit
-      8:{cellWidth:8},                // JVN
-      9:{cellWidth:8},                // VI/IFR
-      10:{cellWidth:6},               // ILS
-      11:{cellWidth:6},               // VOR
-      12:{cellWidth:6},               // NDB
-      13:{cellWidth:6},               // GCA
-      14:{cellWidth:6},               // SCA
-      15:{cellWidth:6},               // RNP
-      16:{cellWidth:8},               // Att.J
-      17:{cellWidth:8},               // Att.N
-      18:{cellWidth:7},               // J1
-      19:{cellWidth:7},               // J2
-      20:{cellWidth:7},               // N1
-      21:{cellWidth:7},               // N2
-      22:{cellWidth:12},              // Sling
-      23:{cellWidth:12},              // Rappel
-      24:{cellWidth:12},              // Treuil
-      25:{cellWidth:12},              // Corde
-      26:{cellWidth:12},              // Grappe
-      27:{cellWidth:12},              // Nacelle
-    },
+    styles:{fontSize:6,cellPadding:1.1,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[150,150,150],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6},
+    columnStyles:colStyles2,
     margin:{left:m,right:m}, theme:'grid',
-    didParseCell:function(d){if(d.row.index===lastDetailIdx){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
+    didParseCell:function(d){
+      if(d.row.index===lastDetail){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}
+    }
   });
 
   // Numéros de page
   var pages=doc.internal.getNumberOfPages();
-  for(var i=1;i<=pages;i++){
-    doc.setPage(i);
-    doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
-    doc.text('CarnetVol — Page '+i+'/'+pages,W/2,H-3,{align:'center'});
+  for(var pi=1;pi<=pages;pi++){
+    doc.setPage(pi);
+    doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(130,130,130);
+    doc.text('CarnetVol — Page '+pi+'/'+pages,W/2,H-3,{align:'center'});
   }
-  doc.save('RegistreServices_'+pLabel.replace(/ /g,'_').replace(/\//g,'-')+'_'+new Date().toISOString().split('T')[0]+'.pdf');
+
+  var fname='RegistreServices_'+pLabel.replace(/[ →\/]/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.pdf';
+  doc.save(fname);
   toast('📋 Registre des services généré !');
 }
-
 
 
 function exportPdfSimus(){
