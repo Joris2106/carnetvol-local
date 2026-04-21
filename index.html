@@ -549,6 +549,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
       <div class="filter-item"><div class="filter-lbl">Pilote</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-pilote',this)">Tous</button><div class="msd-dropdown" id="dd-vs-pilote"></div></div></div>
       <div class="filter-item"><div class="filter-lbl">Lieu</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-lieu',this)">Tous</button><div class="msd-dropdown" id="dd-vs-lieu"></div></div></div>
       <div class="filter-item"><div class="filter-lbl">Mission</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('vs-mission',this)">Toutes</button><div class="msd-dropdown" id="dd-vs-mission"></div></div></div>
+      <div class="filter-item" style="grid-column:1/-1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">📅 Période</span>
+          <input type="date" id="vs-from" onchange="renderStatsVols()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
+          <span style="font-size:11px;color:var(--text3)">→</span>
+          <input type="date" id="vs-to" onchange="renderStatsVols()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
+        </div>
+      </div>
       <button class="filter-reset" onclick="resetStatsVols()" style="grid-column:1/-1">✕ Effacer filtres</button>
     </div>
     <div id="vs-info" class="filter-info hidden"></div>
@@ -559,7 +567,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
       <div class="stitle">AÉROCORDAGE</div><div class="sgrid" id="sg-cord"></div>
       <div class="stitle">APPONTAGES</div><div class="sgrid" id="sg-app"></div>
       <div class="stitle">PAR TYPE D'HÉLICOPTÈRE</div><div class="mlist" id="mlist"></div>
-      <button class="btn-pdf" onclick="exportPdfVols()">📄 EXPORTER RÉCAPITULATIF PDF — VOLS</button>
+      <button class="btn-pdf" onclick="exportPdfVols()">📋 EXPORTER REGISTRE DES SERVICES (PDF)</button>
       <div style="height:20px"></div>
     </div>
   </div>
@@ -573,6 +581,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
       <div class="filter-item"><div class="filter-lbl">Fonction</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-fonction',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-fonction"></div></div></div>
       <div class="filter-item"><div class="filter-lbl">Pilote</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-pilote',this)">Tous</button><div class="msd-dropdown" id="dd-ss-pilote"></div></div></div>
       <div class="filter-item"><div class="filter-lbl">Mission</div><div class="msd"><button class="msd-btn" onclick="toggleMsd('ss-mission',this)">Toutes</button><div class="msd-dropdown" id="dd-ss-mission"></div></div></div>
+      <div class="filter-item" style="grid-column:1/-1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">📅 Période</span>
+          <input type="date" id="ss-from" onchange="renderStatsSimus()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
+          <span style="font-size:11px;color:var(--text3)">→</span>
+          <input type="date" id="ss-to" onchange="renderStatsSimus()" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;color-scheme:dark;min-width:130px">
+        </div>
+      </div>
       <button class="filter-reset" onclick="resetStatsSimus()" style="grid-column:1/-1">✕ Effacer filtres</button>
     </div>
     <div id="ss-info" class="filter-info hidden"></div>
@@ -594,6 +610,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
 
   <!-- Infos administratives -->
   <div style="padding:11px">
+    <div class="profil-section">
+      <div class="profil-title">👤 Identification du pilote</div>
+      <div class="profil-row">
+        <div class="profil-lbl">Grade</div>
+        <input type="text" class="profil-input" id="p-grade" onchange="saveProfilDates()" placeholder="LTN, CNE…" style="width:130px;text-align:left">
+      </div>
+      <div class="profil-row">
+        <div class="profil-lbl">Nom</div>
+        <input type="text" class="profil-input" id="p-nom" onchange="saveProfilDates()" placeholder="NOM…" style="width:160px;text-align:left">
+      </div>
+      <div class="profil-row">
+        <div class="profil-lbl">Prénom</div>
+        <input type="text" class="profil-input" id="p-prenom" onchange="saveProfilDates()" placeholder="Prénom…" style="width:160px;text-align:left">
+      </div>
+      <div class="profil-row">
+        <div class="profil-lbl">N° Brevet</div>
+        <input type="text" class="profil-input" id="p-brevet" onchange="saveProfilDates()" placeholder="1234…" style="width:130px;text-align:left">
+      </div>
+    </div>
     <div class="profil-section">
       <div class="profil-title">🏥 Aptitude médicale</div>
 
@@ -1221,10 +1256,14 @@ function delSimu(id){
 var curStatTab='vols';
 function resetStatsVols(){
   ['vs-type','vs-fonction','vs-pilote','vs-lieu','vs-mission','vs-year','vs-month'].forEach(msdReset);
+  var f=document.getElementById('vs-from'),t=document.getElementById('vs-to');
+  if(f)f.value=''; if(t)t.value='';
   renderStatsVols();
 }
 function resetStatsSimus(){
   ['ss-machine','ss-fonction','ss-pilote','ss-mission','ss-year','ss-month'].forEach(msdReset);
+  var f=document.getElementById('ss-from'),t=document.getElementById('ss-to');
+  if(f)f.value=''; if(t)t.value='';
   renderStatsSimus();
 }
 function switchStatTab(t){
@@ -1287,6 +1326,8 @@ function renderStatsVols(){
   msdInit('vs-mission', 'Toutes', renderStatsVols, uniq(vols.map(function(v){return v.mission||'';})).filter(Boolean));
   msdInit('vs-year',    'Toutes', renderStatsVols, uniq(vols.map(function(v){return v.date?v.date.slice(0,4):'';}).filter(Boolean)).sort(function(a,b){return b-a;}));
   msdInit('vs-month',   'Tous',   renderStatsVols, MOIS_VALS, MOIS_LBLS);
+  var vsFrom=(document.getElementById('vs-from')||{}).value||'';
+  var vsTo=(document.getElementById('vs-to')||{}).value||'';
   var filt=vols.filter(function(v){
     if(msdHas('vs-type')    &&!msdGet('vs-type').has(v.type||''))    return false;
     if(msdHas('vs-fonction')&&!msdGet('vs-fonction').has(v.fonction||''))return false;
@@ -1295,12 +1336,15 @@ function renderStatsVols(){
     if(msdHas('vs-mission') &&!msdGet('vs-mission').has(v.mission||'')) return false;
     if(msdHas('vs-year')    &&(!v.date||!msdGet('vs-year').has(v.date.slice(0,4))))return false;
     if(msdHas('vs-month')   &&(!v.date||!msdGet('vs-month').has(v.date.slice(5,7))))return false;
+    if(vsFrom && v.date && v.date < vsFrom) return false;
+    if(vsTo   && v.date && v.date > vsTo)   return false;
     return true;
   });
   var parts=[];
   ['vs-type','vs-fonction','vs-pilote','vs-lieu','vs-mission','vs-year','vs-month'].forEach(function(id){
     if(msdHas(id))parts.push(msdGetArr(id).join(', '));
   });
+  if(vsFrom||vsTo) parts.push('Du '+(vsFrom?fDate(vsFrom):'—')+' au '+(vsTo?fDate(vsTo):'—'));
   var inf=document.getElementById('vs-info');
   if(parts.length){inf.textContent='🔍 '+parts.join(' · ')+' — '+filt.length+' vol'+(filt.length>1?'s':'');inf.classList.remove('hidden');}
   else inf.classList.add('hidden');
@@ -1319,6 +1363,8 @@ function renderStatsSimus(){
   msdInit('ss-mission', 'Toutes', renderStatsSimus, uniq(simus.map(function(s){return s.mission||'';})).filter(Boolean));
   msdInit('ss-year',    'Toutes', renderStatsSimus, uniq(simus.map(function(s){return s.date?s.date.slice(0,4):'';}).filter(Boolean)).sort(function(a,b){return b-a;}));
   msdInit('ss-month',   'Tous',   renderStatsSimus, MOIS_VALS, MOIS_LBLS);
+  var ssFrom=(document.getElementById('ss-from')||{}).value||'';
+  var ssTo=(document.getElementById('ss-to')||{}).value||'';
   var filt=simus.filter(function(s){
     if(msdHas('ss-machine') &&!msdGet('ss-machine').has(s.machine||''))  return false;
     if(msdHas('ss-fonction')&&!msdGet('ss-fonction').has(s.fonction||''))return false;
@@ -1326,12 +1372,15 @@ function renderStatsSimus(){
     if(msdHas('ss-mission') &&!msdGet('ss-mission').has(s.mission||''))  return false;
     if(msdHas('ss-year')    &&(!s.date||!msdGet('ss-year').has(s.date.slice(0,4))))return false;
     if(msdHas('ss-month')   &&(!s.date||!msdGet('ss-month').has(s.date.slice(5,7))))return false;
+    if(ssFrom && s.date && s.date < ssFrom) return false;
+    if(ssTo   && s.date && s.date > ssTo)   return false;
     return true;
   });
   var parts=[];
   ['ss-machine','ss-fonction','ss-pilote','ss-mission','ss-year','ss-month'].forEach(function(id){
     if(msdHas(id))parts.push(msdGetArr(id).join(', '));
   });
+  if(ssFrom||ssTo) parts.push('Du '+(ssFrom?fDate(ssFrom):'—')+' au '+(ssTo?fDate(ssTo):'—'));
   var inf=document.getElementById('ss-info');
   if(parts.length){inf.textContent='🔍 '+parts.join(' · ')+' — '+filt.length+' séance'+(filt.length>1?'s':'');inf.classList.remove('hidden');}
   else inf.classList.add('hidden');
@@ -1350,6 +1399,10 @@ try{ qualifications = JSON.parse(localStorage.getItem('cv_qualifications') || '[
 
 function saveProfilDates(){
   var profil = {
+    grade:     (document.getElementById('p-grade')||{}).value||'',
+    nom:       (document.getElementById('p-nom')||{}).value||'',
+    prenom:    (document.getElementById('p-prenom')||{}).value||'',
+    brevet:    (document.getElementById('p-brevet')||{}).value||'',
     vmp:       gv('p-vmp'),
     cempn:     gv('p-cempn'),
     vmpDuree:  parseInt(document.getElementById('p-vmp-duree').value)||6,
@@ -1363,6 +1416,10 @@ function saveProfilDates(){
 function loadProfilDates(){
   try{
     var p=JSON.parse(localStorage.getItem('cv_profil')||'{}');
+    var eg=document.getElementById('p-grade'); if(eg)eg.value=p.grade||'';
+    var en=document.getElementById('p-nom');   if(en)en.value=p.nom||'';
+    var ep=document.getElementById('p-prenom');if(ep)ep.value=p.prenom||'';
+    var eb=document.getElementById('p-brevet');if(eb)eb.value=p.brevet||'';
     document.getElementById('p-vmp').value = p.vmp||'';
     document.getElementById('p-cempn').value = p.cempn||'';
     document.getElementById('p-vmp-duree').value = p.vmpDuree||6;
@@ -1423,26 +1480,35 @@ function updateExpiryBadges(){
 
 // ── Qualifications personnalisées ──────────────────────────────────
 var _qualifEditIdx = -1;
+function onQualifUnitChange(){
+  var unit = document.getElementById('qualif-duree-unit').value;
+  var eomLabel = document.getElementById('qualif-eom-label');
+  eomLabel.style.display = (unit === 'jours') ? 'none' : 'flex';
+  if(unit === 'jours') document.getElementById('qualif-eom').checked = false;
+}
 function openQualifModal(idx){
   _qualifEditIdx = (idx !== undefined) ? idx : -1;
   var title = document.getElementById('qualif-modal-title');
   var btn   = document.getElementById('qualif-save-btn');
   if(_qualifEditIdx >= 0){
     var q = qualifications[_qualifEditIdx];
-    document.getElementById('qualif-nom').value   = q.nom||'';
-    document.getElementById('qualif-date').value  = q.date||'';
-    document.getElementById('qualif-duree').value = q.duree||12;
-    document.getElementById('qualif-eom').checked = !!q.eom;
+    document.getElementById('qualif-nom').value        = q.nom||'';
+    document.getElementById('qualif-date').value       = q.date||'';
+    document.getElementById('qualif-duree').value      = q.duree||12;
+    document.getElementById('qualif-duree-unit').value = q.dureeUnit||'mois';
+    document.getElementById('qualif-eom').checked      = !!q.eom;
     title.textContent = 'Modifier la qualification';
     btn.textContent   = 'MODIFIER';
   } else {
-    document.getElementById('qualif-nom').value   = '';
-    document.getElementById('qualif-date').value  = '';
-    document.getElementById('qualif-duree').value = 12;
-    document.getElementById('qualif-eom').checked = false;
+    document.getElementById('qualif-nom').value        = '';
+    document.getElementById('qualif-date').value       = '';
+    document.getElementById('qualif-duree').value      = 12;
+    document.getElementById('qualif-duree-unit').value = 'mois';
+    document.getElementById('qualif-eom').checked      = false;
     title.textContent = 'Nouvelle qualification';
     btn.textContent   = 'AJOUTER';
   }
+  onQualifUnitChange();
   document.getElementById('qualif-modal').style.display='flex';
   setTimeout(function(){ document.getElementById('qualif-nom').focus(); }, 100);
 }
@@ -1450,13 +1516,14 @@ function closeQualifModal(){
   document.getElementById('qualif-modal').style.display='none';
 }
 function saveQualif(){
-  var nom   = document.getElementById('qualif-nom').value.trim();
-  var date  = document.getElementById('qualif-date').value;
-  var duree = parseInt(document.getElementById('qualif-duree').value)||12;
-  var eom   = document.getElementById('qualif-eom').checked;
+  var nom       = document.getElementById('qualif-nom').value.trim();
+  var date      = document.getElementById('qualif-date').value;
+  var duree     = parseInt(document.getElementById('qualif-duree').value)||12;
+  var dureeUnit = document.getElementById('qualif-duree-unit').value||'mois';
+  var eom       = (dureeUnit === 'mois') && document.getElementById('qualif-eom').checked;
   if(!nom){ toast('⚠️ Entrez un nom', '#e63946'); return; }
   if(!date){ toast('⚠️ Entrez une date', '#e63946'); return; }
-  var q = {nom:nom, date:date, duree:duree, eom:eom};
+  var q = {nom:nom, date:date, duree:duree, dureeUnit:dureeUnit, eom:eom};
   if(_qualifEditIdx >= 0){
     qualifications[_qualifEditIdx] = q;
   } else {
@@ -1476,11 +1543,19 @@ function deleteQualif(idx){
 }
 function qualifExpiryInfo(q){
   if(!q.date || !q.duree) return {txt:'—', col:'var(--text3)', bg:'transparent', border:'transparent'};
-  var exp = addMonthsEndOfMonth(q.date, q.duree, q.eom);
+  var unit = q.dureeUnit || 'mois';
+  var exp;
+  if(unit === 'jours'){
+    var d = new Date(q.date + 'T00:00:00');
+    d.setDate(d.getDate() + q.duree);
+    exp = d;
+  } else {
+    exp = addMonthsEndOfMonth(q.date, q.duree, q.eom);
+  }
   var now = new Date(); now.setHours(0,0,0,0);
   var diffDays = Math.round((exp - now)/(1000*60*60*24));
   var expStr = fDate(exp.toISOString().split('T')[0]);
-  var eomTxt = q.eom ? ' (fin de mois)' : '';
+  var eomTxt = (unit === 'mois' && q.eom) ? ' (fin de mois)' : '';
   var txt, col, bg;
   if(diffDays<0){
     txt='⛔ Expirée depuis '+Math.abs(diffDays)+' j — '+expStr+eomTxt;
@@ -1503,7 +1578,7 @@ function renderQualifList(){
   }
   el.innerHTML = qualifications.map(function(q, idx){
     var info = qualifExpiryInfo(q);
-    var dureeLabel = q.duree+' mois'+(q.eom?' · fin de mois':'');
+    var dureeLabel = q.duree+' '+(q.dureeUnit||'mois')+(q.eom&&(q.dureeUnit||'mois')==='mois'?' · fin de mois':'');
     return '<div class="profil-row" style="flex-direction:column;align-items:flex-start;gap:5px">'+
       '<div style="display:flex;align-items:center;width:100%;gap:8px">'+
         '<div style="flex:1">'+
@@ -1641,111 +1716,281 @@ function computeByKey(data, key, label){
 function exportPdfVols(){
   var {jsPDF}=window.jspdf;
   var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  var W=doc.internal.pageSize.getWidth();
-  var H=doc.internal.pageSize.getHeight();
+  var W=210, H=297, m=8;
 
-  // Filtres actifs
-  var filterIds=['vs-type','vs-fonction','vs-pilote','vs-lieu','vs-mission','vs-year','vs-month'];
-  var subtitle=buildFilterInfo(filterIds);
+  // Données filtrées (mêmes filtres que stats)
+  var vsFrom=(document.getElementById('vs-from')||{}).value||'';
+  var vsTo  =(document.getElementById('vs-to')||{}).value||'';
+  var data=getStatsFilteredVols(); // triés par date asc
 
-  // Appliquer les mêmes filtres que les stats
-  var data=vols.filter(function(v){
-    if(msdHas('vs-type')    &&!msdGet('vs-type').has(v.type||''))    return false;
-    if(msdHas('vs-fonction')&&!msdGet('vs-fonction').has(v.fonction||''))return false;
-    if(msdHas('vs-pilote')  &&!msdGet('vs-pilote').has(v.pilote||''))  return false;
-    if(msdHas('vs-lieu')    &&!msdGet('vs-lieu').has(v.lieu||''))    return false;
-    if(msdHas('vs-mission') &&!msdGet('vs-mission').has(v.mission||'')) return false;
-    if(msdHas('vs-year')    &&(!v.date||!msdGet('vs-year').has(v.date.slice(0,4))))return false;
-    if(msdHas('vs-month')   &&(!v.date||!msdGet('vs-month').has(v.date.slice(5,7))))return false;
+  // Vols hors filtre (pour "Total précédent")
+  var dataIds={};
+  data.forEach(function(v){dataIds[v.id]=1;});
+  var allVols=vols.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+  var prevVols=allVols.filter(function(v){return !dataIds[v.id];});
+
+  // Simu filtrés sur la même période
+  var simuFilt=simus.filter(function(s){
+    if(vsFrom&&s.date&&s.date<vsFrom)return false;
+    if(vsTo  &&s.date&&s.date>vsTo)  return false;
     return true;
   });
 
-  var y=pdfHeader(doc,'RÉCAPITULATIF DES VOLS',subtitle);
+  // Calcul des totaux
+  function sumS(arr){
+    var r={j:0,n:0,jvn:0,ivi:0,attJ:0,attN:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,
+      slingJ:0,slingN:0,rappelJ:0,rappelN:0,treuJ:0,treuN:0,
+      cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0,
+      tagJ1:0,tagJ2:0,tagN1:0,tagN2:0};
+    arr.forEach(function(v){
+      r.j+=pH(v.potJour);r.n+=pH(v.potNuit);r.jvn+=pH(v.potJvn);r.ivi+=pH(v.potIvi);
+      r.attJ+=n(v.attJour);r.attN+=n(v.attNuit);
+      r.ils+=n(v.ils);r.vor+=n(v.vor);r.ndb+=n(v.ndb);
+      r.gca+=n(v.gca);r.sca+=n(v.sca);r.rnp+=n(v.rnp);
+      r.slingJ+=n(v.slingJ);r.slingN+=n(v.slingN);
+      r.rappelJ+=n(v.rappelJ);r.rappelN+=n(v.rappelN);
+      r.treuJ+=n(v.treuJ);r.treuN+=n(v.treuN);
+      r.cordeJ+=n(v.cordeJ);r.cordeN+=n(v.cordeN);
+      r.grappeJ+=n(v.grappeJ);r.grappeN+=n(v.grappeN);
+      r.nacelleJ+=n(v.nacelleJ);r.nacelleN+=n(v.nacelleN);
+      r.tagJ1+=n(v.tagJ1);r.tagJ2+=n(v.tagJ2);r.tagN1+=n(v.tagN1);r.tagN2+=n(v.tagN2);
+    });
+    return r;
+  }
+  var cur=sumS(data), prev=sumS(prevVols), tot=sumS(allVols);
+  var simuJ=0,simuN=0,simuJvn=0,simuIvi=0;
+  simuFilt.forEach(function(s){simuJ+=pH(s.potJour);simuN+=pH(s.potNuit);simuJvn+=pH(s.potJvn);simuIvi+=pH(s.potIvi);});
+  var simuTot=simuJ+simuN;
 
-  // ── RÉSUMÉ GLOBAL ────────────────────────────────────────────────
-  var totJ=0,totN=0,totJvn=0,totIfr=0,totTac=0,attJ=0,attN=0;
+  // Libellé de période
+  var MS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  function mLbl(d){if(!d)return'—';var p=d.split('-');return MS[parseInt(p[1])-1]+'-'+p[0].slice(2);}
+  var d0=data.length?data[0].date:'', d1=data.length?data[data.length-1].date:'';
+  var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' — '+fDate(d1);
+
+  // Formatage heures
+  function hv(v){var r=parseFloat(v.toFixed(1));return r?String(r):'';}
+  function hv0(v){return String(parseFloat(v.toFixed(1)));}
+  function ni0(v){return String(v);}
+
+  // Profil
+  var profil={};
+  try{profil=JSON.parse(localStorage.getItem('cv_profil')||'{}');}catch(e){}
+
+  var y=m;
+
+  // ── TITRE ────────────────────────────────────────────────────────
+  doc.setFillColor(7,16,31);
+  doc.rect(m,y,W-2*m,8,'F');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('EXTRAIT DU REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+5.5,{align:'center'});
+  y+=10;
+
+  // ── EN-TÊTE PILOTE ───────────────────────────────────────────────
+  doc.setFillColor(215,228,248);
+  doc.rect(m,y,W-2*m,7,'FD');
+  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  var cw=(W-2*m)/4;
+  doc.text('GRADE : '+(profil.grade||'__________'), m+2,y+4.8);
+  doc.text('NOM : '+(profil.nom||'________________'), m+cw+2,y+4.8);
+  doc.text('PRENOM : '+(profil.prenom||'____________'), m+2*cw+2,y+4.8);
+  doc.text('BREVET : '+(profil.brevet||'__________'), m+3*cw+2,y+4.8);
+  y+=9;
+  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  doc.text('Mois de : '+pLabel, m,y+4);
+  y+=8;
+
+  // ── SECTION DOUBLE COLONNE ───────────────────────────────────────
+  var leftW=110, rightX=m+leftW+4, rightW=W-m-rightX; // rightW=80mm
+  var topY=y;
+
+  // Tableau vols (gauche)
+  var flightBody=data.map(function(v){
+    var tf=pH(v.potJour)+pH(v.potNuit);
+    return [v.lieu||'','',
+      v.potJour?hv(pH(v.potJour)):'',
+      v.potNuit?hv(pH(v.potNuit)):'',
+      v.potJvn?hv(pH(v.potJvn)):'',
+      v.potIvi?hv(pH(v.potIvi)):'',
+      tf?hv(tf):''];
+  });
+  if(!flightBody.length)flightBody=[['Aucun vol','','','','','','']];
+
+  doc.autoTable({
+    startY:topY,
+    head:[['Localisation','Simu','Jour','Nuit','JVN','VI/IFR','Total']],
+    body:flightBody,
+    styles:{fontSize:7.5,cellPadding:1.5,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7.5},
+    columnStyles:{0:{halign:'left',cellWidth:32},1:{cellWidth:12},2:{cellWidth:13},3:{cellWidth:13},4:{cellWidth:13},5:{cellWidth:14},6:{cellWidth:13}},
+    margin:{left:m,right:W-m-leftW},
+    theme:'grid'
+  });
+  var leftEnd=doc.lastAutoTable.finalY;
+
+  // Percées (droite)
+  doc.autoTable({
+    startY:topY,
+    head:[['Percées','Jour','Nuit']],
+    body:[
+      ['ILS',ni0(cur.ils),'—'],['VOR',ni0(cur.vor),'—'],
+      ['NDB',ni0(cur.ndb),'—'],['GCA',ni0(cur.gca),'—'],
+      ['SCA',ni0(cur.sca),'—'],['RNP',ni0(cur.rnp),'—'],
+    ],
+    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
+    columnStyles:{0:{halign:'left',cellWidth:22},1:{cellWidth:29},2:{cellWidth:29}},
+    margin:{left:rightX,right:m},
+    theme:'grid'
+  });
+  var ry=doc.lastAutoTable.finalY+2;
+
+  // Atterrissages
+  doc.autoTable({
+    startY:ry,
+    head:[['Atterrissages','Jour','Nuit']],
+    body:[['',ni0(cur.attJ),ni0(cur.attN)]],
+    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
+    columnStyles:{0:{halign:'left',cellWidth:22},1:{cellWidth:29},2:{cellWidth:29}},
+    margin:{left:rightX,right:m},
+    theme:'grid'
+  });
+  ry=doc.lastAutoTable.finalY+2;
+
+  // Appontages
+  doc.autoTable({
+    startY:ry,
+    head:[['Appontages','J1','J2','N1','N2']],
+    body:[['',ni0(cur.tagJ1),ni0(cur.tagJ2),ni0(cur.tagN1),ni0(cur.tagN2)]],
+    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
+    columnStyles:{0:{halign:'left',cellWidth:16},1:{cellWidth:16},2:{cellWidth:16},3:{cellWidth:16},4:{cellWidth:16}},
+    margin:{left:rightX,right:m},
+    theme:'grid'
+  });
+  ry=doc.lastAutoTable.finalY+2;
+
+  // Aérocordage
+  doc.autoTable({
+    startY:ry,
+    head:[['Aérocordage','Jour','Nuit']],
+    body:[
+      ['Sling',    ni0(cur.slingJ), ni0(cur.slingN)],
+      ['Rappel',   ni0(cur.rappelJ),ni0(cur.rappelN)],
+      ['Treuil',   ni0(cur.treuJ),  ni0(cur.treuN)],
+      ['Corde lisse',ni0(cur.cordeJ),ni0(cur.cordeN)],
+      ['Grappe',   ni0(cur.grappeJ),ni0(cur.grappeN)],
+      ['Nacelle',  ni0(cur.nacelleJ),ni0(cur.nacelleN)],
+    ],
+    styles:{fontSize:7,cellPadding:1.3,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
+    columnStyles:{0:{halign:'left',cellWidth:28},1:{cellWidth:26},2:{cellWidth:26}},
+    margin:{left:rightX,right:m},
+    theme:'grid'
+  });
+  ry=doc.lastAutoTable.finalY;
+
+  y=Math.max(leftEnd,ry)+4;
+
+  // ── SYNTHÈSE PAR FONCTION ─────────────────────────────────────────
+  var foncsMap={};
   data.forEach(function(v){
-    totJ+=pH(v.potJour);totN+=pH(v.potNuit);totJvn+=pH(v.potJvn);
-    totIfr+=pH(v.potIvi);totTac+=pH(v.potTac);
-    attJ+=parseInt(v.attJour)||0; attN+=parseInt(v.attNuit)||0;
+    var f=v.fonction||'—';
+    if(!foncsMap[f])foncsMap[f]={j:0,n:0,jvn:0,ivi:0};
+    foncsMap[f].j+=pH(v.potJour);foncsMap[f].n+=pH(v.potNuit);
+    foncsMap[f].jvn+=pH(v.potJvn);foncsMap[f].ivi+=pH(v.potIvi);
   });
-  y=pdfSection(doc,'Résumé global — '+data.length+' vol'+(data.length>1?'s':''),y,[0,77,182]);
-  y=autoT(doc,
-    ['Pot. Jour','Pot. Nuit','JVN','IFR','Tactique','TOTAL','Attr. J','Attr. N'],
-    [[fH2(totJ),fH2(totN),fH2(totJvn),fH2(totIfr),fH2(totTac),fH2(totJ+totN),ni(attJ),ni(attN)]],
-    y);
-
-  // ── PAR TYPE D'HÉLICOPTÈRE ────────────────────────────────────────
-  var byType=computeByKey(data,'type','Type');
-  if(byType.length){
-    y=pdfSection(doc,'Potentiel par type d\'hélicoptère',y,[0,119,182]);
-    var rows=byType.map(function(r){return[r.lbl,r.nb,fH2(r.j),fH2(r.n),fH2(r.jvn),fH2(r.ifr),fH2(r.tac),fH2(r.j+r.n)];});
-    y=autoT(doc,['Type','Vols','Jour','Nuit','JVN','IFR','Tactique','Total'],rows,y,
-      {colStyles:{0:{halign:'left',cellWidth:30}}});
-  }
-
-  // ── PAR FONCTION ─────────────────────────────────────────────────
-  var byFonc=computeByKey(data,'fonction','Fonction');
-  if(byFonc.length){
-    if(y>H-60){doc.addPage();y=pdfHeader(doc,'RÉCAPITULATIF DES VOLS (suite)',subtitle);}
-    y=pdfSection(doc,'Potentiel par fonction à bord',y,[0,77,182]);
-    var rows=byFonc.map(function(r){return[r.lbl,r.nb,fH2(r.j),fH2(r.n),fH2(r.jvn),fH2(r.ifr),fH2(r.tac),fH2(r.j+r.n)];});
-    y=autoT(doc,['Fonction','Vols','Jour','Nuit','JVN','IFR','Tactique','Total'],rows,y,
-      {colStyles:{0:{halign:'left',cellWidth:30}}});
-  }
-
-  // ── AÉROCORDAGE ──────────────────────────────────────────────────
-  var cordFields=[
-    ['slingJ','slingN','Sling'],['rappelJ','rappelN','Rappel'],
-    ['treuJ','treuN','Treuil'],['cordeJ','cordeN','Corde lisse'],
-    ['grappeJ','grappeN','Grappe'],['nacelleJ','nacelleN','Nacelle']
-  ];
-  var cordRows=[];
-  cordFields.forEach(function(f){
-    var j=data.reduce(function(s,v){return s+(parseInt(v[f[0]])||0);},0);
-    var n=data.reduce(function(s,v){return s+(parseInt(v[f[1]])||0);},0);
-    if(j||n) cordRows.push([f[2],ni(j),ni(n),ni(j+n)]);
+  var synthBody=Object.keys(foncsMap).map(function(f){
+    var r=foncsMap[f],t=r.j+r.n;
+    return [f,'',hv0(r.j),hv0(r.n),hv0(r.jvn),hv0(r.ivi),hv0(t)];
   });
-  if(cordRows.length){
-    if(y>H-60){doc.addPage();y=pdfHeader(doc,'RÉCAPITULATIF DES VOLS (suite)',subtitle);}
-    y=pdfSection(doc,'Aérocordage',y,[45,100,50]);
-    y=autoT(doc,['Technique','Jour','Nuit','Total'],cordRows,y,
-      {colStyles:{0:{halign:'left',cellWidth:40}}});
-  } else {
-    if(y>H-40){doc.addPage();y=pdfHeader(doc,'RÉCAPITULATIF DES VOLS (suite)',subtitle);}
-    y=pdfSection(doc,'Aérocordage',y,[45,100,50]);
-    y=autoT(doc,['Technique','Jour','Nuit','Total'],[['Aucune donnée','—','—','—']],y);
-  }
+  if(simuTot>0)synthBody.push(['SIMU',hv0(simuTot),'','','','','']);
+  synthBody.push(['TOT',simuTot?hv0(simuTot):'',hv0(cur.j),hv0(cur.n),hv0(cur.jvn),hv0(cur.ivi),hv0(cur.j+cur.n)]);
+  var lastIdx=synthBody.length-1;
 
-  // ── PERCÉES ──────────────────────────────────────────────────────
-  var percFields=[['ils','ILS'],['vor','VOR'],['ndb','NDB'],['gca','GCA'],['sca','SCA'],['rnp','RNP']];
-  var percRow=percFields.map(function(f){return ni(data.reduce(function(s,v){return s+(parseInt(v[f[0]])||0);},0));});
-  if(y>H-50){doc.addPage();y=pdfHeader(doc,'RÉCAPITULATIF DES VOLS (suite)',subtitle);}
-  y=pdfSection(doc,'Percées aux instruments',y,[0,90,150]);
-  y=autoT(doc,percFields.map(function(f){return f[1];}),[[].concat(percRow)],y);
+  doc.autoTable({
+    startY:y,
+    head:[['Fonction','Simu','Jour','Nuit','JVN','VI/IFR','Total']],
+    body:synthBody,
+    styles:{fontSize:8,cellPadding:2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:8},
+    columnStyles:{0:{halign:'left',cellWidth:30}},
+    margin:{left:m,right:m},
+    theme:'grid',
+    didParseCell:function(d){if(d.row.index===lastIdx){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
+  });
+  y=doc.lastAutoTable.finalY+3;
 
-  // ── APPONTAGES ───────────────────────────────────────────────────
-  var tagJ1=data.reduce(function(s,v){return s+(parseInt(v.tagJ1)||0);},0);
-  var tagJ2=data.reduce(function(s,v){return s+(parseInt(v.tagJ2)||0);},0);
-  var tagN1=data.reduce(function(s,v){return s+(parseInt(v.tagN1)||0);},0);
-  var tagN2=data.reduce(function(s,v){return s+(parseInt(v.tagN2)||0);},0);
-  if(y>H-50){doc.addPage();y=pdfHeader(doc,'RÉCAPITULATIF DES VOLS (suite)',subtitle);}
-  y=pdfSection(doc,'Appontages (TAG)',y,[80,50,20]);
-  y=autoT(doc,['TAG J1 (plt.1 Jour)','TAG J2 (plt.2 Jour)','TAG N1 (plt.1 Nuit)','TAG N2 (plt.2 Nuit)','TOTAL'],
-    [[ni(tagJ1),ni(tagJ2),ni(tagN1),ni(tagN2),ni(tagJ1+tagJ2+tagN1+tagN2)]],y);
+  // ── TOTAUX ───────────────────────────────────────────────────────
+  doc.autoTable({
+    startY:y,
+    head:[['','Simu','Jour','Nuit','JVN','VI/IFR','Total']],
+    body:[
+      [pLabel,       simuTot?hv0(simuTot):'0', hv0(cur.j), hv0(cur.n), hv0(cur.jvn), hv0(cur.ivi), hv0(cur.j+cur.n)],
+      ['Total précédent','', hv0(prev.j),hv0(prev.n),hv0(prev.jvn),hv0(prev.ivi),hv0(prev.j+prev.n)],
+      ['TOTAL',      '',     hv0(tot.j), hv0(tot.n), hv0(tot.jvn), hv0(tot.ivi), hv0(tot.j+tot.n)],
+    ],
+    styles:{fontSize:8,cellPadding:2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:8},
+    columnStyles:{0:{halign:'left',cellWidth:35}},
+    margin:{left:m,right:m},
+    theme:'grid',
+    didParseCell:function(d){if(d.row.index===2){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}}
+  });
+  y=doc.lastAutoTable.finalY+5;
 
-  // ── PIED DE PAGE ─────────────────────────────────────────────────
+  // ── SIGNATURES ──────────────────────────────────────────────────
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
+  doc.text("L'intéressé :",m,y);
+  doc.text("L'autorité :",W/2+10,y);
+  doc.setDrawColor(140,140,140);
+  doc.line(m+22,y+10,m+65,y+10);
+  doc.line(W/2+32,y+10,W/2+75,y+10);
+  y+=16;
+  doc.setFontSize(7.5);doc.setFont('helvetica','italic');
+  doc.text('Certifié conforme au registre journal des services aériens',W/2,y,{align:'center'});
+  y+=8;
+
+  // ── REGISTRE JOURNAL ─────────────────────────────────────────────
+  if(y>H-55){doc.addPage();y=m;}
+  doc.setFillColor(7,16,31);
+  doc.rect(m,y,W-2*m,7,'F');
+  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('EXTRAIT DU REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+4.8,{align:'center'});
+  y+=9;
+  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
+  doc.text('Mois de : '+pLabel,m,y+4);
+  y+=7;
+
+  doc.autoTable({
+    startY:y,
+    head:[['Date','Appareil','Fonc.','Pilote','Mission','Sling','Rappel','Treuil','Corde','Grappe','Nacelle']],
+    body:data.slice().reverse().map(function(v){
+      function ae(j,nv){var a=n(j),b=n(nv);if(!a&&!b)return'';return(a?a+'J':'')+(b?'/'+b+'N':'');}
+      return [fDate(v.date),v.type||'—',v.fonction||'',v.pilote||'',v.mission||'',
+        ae(v.slingJ,v.slingN),ae(v.rappelJ,v.rappelN),ae(v.treuJ,v.treuN),
+        ae(v.cordeJ,v.cordeN),ae(v.grappeJ,v.grappeN),ae(v.nacelleJ,v.nacelleN)];
+    }),
+    styles:{fontSize:7,cellPadding:1.5,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[160,160,160],lineWidth:0.2},
+    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
+    columnStyles:{0:{cellWidth:20,halign:'left'},1:{cellWidth:16},2:{cellWidth:11},3:{cellWidth:28,halign:'left'},4:{cellWidth:42,halign:'left'},5:{cellWidth:10},6:{cellWidth:10},7:{cellWidth:10},8:{cellWidth:10},9:{cellWidth:10},10:{cellWidth:10}},
+    margin:{left:m,right:m},
+    theme:'grid'
+  });
+
+  // Numéros de page
   var pages=doc.internal.getNumberOfPages();
   for(var i=1;i<=pages;i++){
     doc.setPage(i);
-    doc.setFontSize(7);
-    doc.setTextColor(50,74,107);
-    doc.text('CarnetVol — Page '+i+'/'+pages, W/2, H-5, {align:'center'});
+    doc.setFontSize(6.5);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+    doc.text('CarnetVol — Page '+i+'/'+pages,W/2,H-3,{align:'center'});
   }
-
-  doc.save('RecapitulatifVols_'+new Date().toISOString().split('T')[0]+'.pdf');
-  toast('📄 PDF généré !');
+  doc.save('RegistreServices_'+pLabel.replace(/ /g,'_').replace(/\//g,'-')+'_'+new Date().toISOString().split('T')[0]+'.pdf');
+  toast('📋 Registre des services généré !');
 }
+
+
 
 function exportPdfSimus(){
   var {jsPDF}=window.jspdf;
@@ -2000,7 +2245,7 @@ function exportToExcel(){
     if(qualifications.length){
       profilRows.push(['--- Qualifications ---','']);
       qualifications.forEach(function(q){
-        profilRows.push([q.nom, q.date+' / '+q.duree+'mois'+(q.eom?' fin-mois':'')]);
+        profilRows.push([q.nom, q.date+' / '+q.duree+(q.dureeUnit||'mois')+(q.eom?' fin-mois':'')]);
       });
     }
     var wsProfil = XLSX.utils.aoa_to_sheet(profilRows);
@@ -2197,6 +2442,24 @@ function installPwa(){
     });
   }
 }
+// ══ UTILITAIRES EXPORT ═══════════════════════════════════════════════
+function getStatsFilteredVols(){
+  var vsFrom=(document.getElementById('vs-from')||{}).value||'';
+  var vsTo=(document.getElementById('vs-to')||{}).value||'';
+  return vols.filter(function(v){
+    if(msdHas('vs-type')    &&!msdGet('vs-type').has(v.type||''))    return false;
+    if(msdHas('vs-fonction')&&!msdGet('vs-fonction').has(v.fonction||''))return false;
+    if(msdHas('vs-pilote')  &&!msdGet('vs-pilote').has(v.pilote||''))  return false;
+    if(msdHas('vs-lieu')    &&!msdGet('vs-lieu').has(v.lieu||''))    return false;
+    if(msdHas('vs-mission') &&!msdGet('vs-mission').has(v.mission||'')) return false;
+    if(msdHas('vs-year')    &&(!v.date||!msdGet('vs-year').has(v.date.slice(0,4))))return false;
+    if(msdHas('vs-month')   &&(!v.date||!msdGet('vs-month').has(v.date.slice(5,7))))return false;
+    if(vsFrom && v.date && v.date<vsFrom) return false;
+    if(vsTo   && v.date && v.date>vsTo)   return false;
+    return true;
+  }).sort(function(a,b){return(a.date||'').localeCompare(b.date||'');});
+}
+
 function dismissBanner(){
   document.getElementById('pwa-banner').style.display = 'none';
 }
@@ -2236,11 +2499,15 @@ function dismissBanner(){
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:5px;flex:1">
         <label style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Validité</label>
-        <input type="number" id="qualif-duree" min="1" max="240" value="12"
-          style="width:60px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:7px 8px;outline:none;text-align:center;-webkit-appearance:none">
-        <span style="font-size:11px;color:var(--text2)">mois</span>
+        <input type="number" id="qualif-duree" min="1" max="9999" value="12"
+          style="width:70px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:7px 8px;outline:none;text-align:center;-webkit-appearance:none">
+        <select id="qualif-duree-unit" onchange="onQualifUnitChange()"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:7px 8px;outline:none;-webkit-appearance:none;cursor:pointer">
+          <option value="mois">mois</option>
+          <option value="jours">jours</option>
+        </select>
       </div>
-      <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer">
+      <label id="qualif-eom-label" style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer">
         <input type="checkbox" id="qualif-eom" style="accent-color:var(--accent);width:14px;height:14px">
         fin de mois
       </label>
