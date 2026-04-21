@@ -1391,6 +1391,7 @@ function renderStatsVols(){
   if(parts.length){inf.textContent='🔍 '+parts.join(' · ')+' — '+filt.length+' vol'+(filt.length>1?'s':'');inf.classList.remove('hidden');}
   else inf.classList.add('hidden');
   updateFilterBadge('vfb-badge',['vs-type','vs-fonction','vs-pilote','vs-lieu','vs-mission','vs-year','vs-month'],'vs-from','vs-to');
+  renderStatBlocks(computeStats(filt),'');
   var machines={};
   filt.forEach(function(v){var k=v.type||'?';if(!machines[k])machines[k]={n:k,m:0,c:0};machines[k].m+=pH(v.potJour)+pH(v.potNuit);machines[k].c++;});
   var rows=Object.values(machines).sort(function(a,b){return b.m-a.m;});
@@ -1427,6 +1428,7 @@ function renderStatsSimus(){
   if(parts.length){inf.textContent='🔍 '+parts.join(' · ')+' — '+filt.length+' séance'+(filt.length>1?'s':'');inf.classList.remove('hidden');}
   else inf.classList.add('hidden');
   updateFilterBadge('sfb-badge',['ss-machine','ss-fonction','ss-pilote','ss-mission','ss-year','ss-month'],'ss-from','ss-to');
+  renderStatBlocks(computeStats(filt),'simu-');
   var machines={};
   filt.forEach(function(s){var k=s.machine||'?';if(!machines[k])machines[k]={n:k,m:0,c:0};machines[k].m+=pH(s.potJour)+pH(s.potNuit);machines[k].c++;});
   var rows=Object.values(machines).sort(function(a,b){return b.m-a.m;});
@@ -1760,188 +1762,187 @@ function exportPdfVols(){
   var doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   var W=297, H=210, m=7;
 
-  var data=getStatsFilteredVols(); // triés par date asc
+  var data=getStatsFilteredVols();
 
-  // Profil
   var profil={};
   try{profil=JSON.parse(localStorage.getItem('cv_profil')||'{}');}catch(e){}
 
-  // Période label
   var MS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   function mLbl(d){if(!d)return'—';var p=d.split('-');return MS[parseInt(p[1])-1]+'-'+p[0].slice(2);}
   var d0=data.length?data[0].date:'', d1=data.length?data[data.length-1].date:'';
   var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' → '+fDate(d1);
 
-  // Formatage
-  function hve(v){var r=parseFloat((+v).toFixed(1));return r?String(r):'';}
-  function nv(v){return v?String(v):'';}
+  function hve(v){var r=parseFloat((+v||0).toFixed(1));return r?String(r):'';}
+  function nv(v){return (+v)?String(+v):'';}
 
-  // Styles communs tableaux
-  var baseS={fontSize:6.5,cellPadding:1.2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[150,150,150],lineWidth:0.2};
-  var headS={fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6.5};
+  // ── Colonnes & largeurs ──────────────────────────────────────────
+  // 1 col Fonction + 28 données. Total utile = 283mm.
+  // Groupes : Hres(4) | Percées(6) | Att(2) | App(4) | Sling(2) | Treuil(2) | Rappel(2) | Corde(2) | Grappe(2) | Nacelle(2) = 28
+  // Largeurs : Fonc=24, Hres=9, Percées=7, Att=8, App=7, Aero=7
+  var fnW  = 24;  // Fonction
+  var hW   = 9;   // heures (Jour Nuit JVN VI/IFR) × 4
+  var pW   = 7;   // percées (ILS VOR NDB GCA SCA RNP) × 6
+  var atW  = 8;   // atterrissages × 2
+  var apW  = 7;   // appontages × 4
+  var aW   = 7;   // aérocordage × 12
+  // Total = 24 + 4*9 + 6*7 + 2*8 + 4*7 + 12*7 = 24+36+42+16+28+84 = 230 → on a 283 → on peut élargir
+  // Ajuster : hW=10, pW=8, atW=9, apW=8, aW=8
+  hW=10; pW=8; atW=9; apW=8; aW=8;
+  // Total = 24+40+48+18+32+96 = 258 → ok, reste 25 → répartir sur fonction et hres
+  fnW=30; hW=11;
+  // 30+44+48+18+32+96 = 268 → reste 15 → ajouter 2 à hW et 1 à pW
+  hW=13; pW=8;
+  // 30+52+48+18+32+96 = 276 → reste 7 → OK (légère marge)
 
-  // Colonnes de données (en-têtes courts)
-  var dataCols=['Jour','Nuit','JVN','VI/IFR',
-    'ILS','VOR','NDB','GCA','SCA','RNP',
-    'Att.J','Att.N',
-    'J1','J2','N1','N2',
-    'Sling J','Sling N','Treuil J','Treuil N','Rappel J','Rappel N',
-    'Corde J','Corde N','Grappe J','Grappe N','Nacelle J','Nacelle N'];
+  var colStyles={0:{halign:'left',cellWidth:fnW,fontStyle:'bold'}};
+  var ci=1;
+  for(var i=0;i<4;i++,ci++)  colStyles[ci]={cellWidth:hW};
+  for(var i=0;i<6;i++,ci++)  colStyles[ci]={cellWidth:pW};
+  for(var i=0;i<2;i++,ci++)  colStyles[ci]={cellWidth:atW};
+  for(var i=0;i<4;i++,ci++)  colStyles[ci]={cellWidth:apW};
+  for(var i=0;i<12;i++,ci++) colStyles[ci]={cellWidth:aW};
 
-  // Extraction d'une ligne de données à partir d'un objet vol (ou somme)
+  var headRow1=['Fonction','Heures de vol','','','','Percées instruments','','','','','','Atterrissages','','Appontages','','','','Sling','','Treuil','','Rappel','','Corde lisse','','Grappe','','Nacelle',''];
+  var headRow2=['','Jour','Nuit','JVN','VI/IFR','ILS','VOR','NDB','GCA','SCA','RNP','Att.J','Att.N','J1','J2','N1','N2','J','N','J','N','J','N','J','N','J','N','J','N'];
+
   function rowData(v){
-    return [
+    return[
       hve(pH(v.potJour||0)), hve(pH(v.potNuit||0)), hve(pH(v.potJvn||0)), hve(pH(v.potIvi||0)),
-      nv(n(v.ils)), nv(n(v.vor)), nv(n(v.ndb)), nv(n(v.gca)), nv(n(v.sca)), nv(n(v.rnp)),
-      nv(n(v.attJour)), nv(n(v.attNuit)),
-      nv(n(v.tagJ1)), nv(n(v.tagJ2)), nv(n(v.tagN1)), nv(n(v.tagN2)),
-      nv(n(v.slingJ)), nv(n(v.slingN)), nv(n(v.treuJ)), nv(n(v.treuN)),
-      nv(n(v.rappelJ)), nv(n(v.rappelN)),
-      nv(n(v.cordeJ)), nv(n(v.cordeN)),
-      nv(n(v.grappeJ)), nv(n(v.grappeN)),
-      nv(n(v.nacelleJ)), nv(n(v.nacelleN))
+      nv(v.ils), nv(v.vor), nv(v.ndb), nv(v.gca), nv(v.sca), nv(v.rnp),
+      nv(v.attJour), nv(v.attNuit),
+      nv(v.tagJ1), nv(v.tagJ2), nv(v.tagN1), nv(v.tagN2),
+      nv(v.slingJ), nv(v.slingN), nv(v.treuJ), nv(v.treuN),
+      nv(v.rappelJ), nv(v.rappelN),
+      nv(v.cordeJ), nv(v.cordeN),
+      nv(v.grappeJ), nv(v.grappeN),
+      nv(v.nacelleJ), nv(v.nacelleN)
     ];
   }
 
-  // Calcul totaux par fonction
-  function sumByFonc(arr){
-    var map={};
-    arr.forEach(function(v){
-      var f=v.fonction||'—';
-      if(!map[f])map[f]={potJour:0,potNuit:0,potJvn:0,potIvi:0,
-        ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,
-        attJour:0,attNuit:0,tagJ1:0,tagJ2:0,tagN1:0,tagN2:0,
-        slingJ:0,slingN:0,treuJ:0,treuN:0,rappelJ:0,rappelN:0,
-        cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0};
-      var r=map[f];
-      r.potJour+=pH(v.potJour);r.potNuit+=pH(v.potNuit);r.potJvn+=pH(v.potJvn);r.potIvi+=pH(v.potIvi);
-      r.ils+=n(v.ils);r.vor+=n(v.vor);r.ndb+=n(v.ndb);r.gca+=n(v.gca);r.sca+=n(v.sca);r.rnp+=n(v.rnp);
-      r.attJour+=n(v.attJour);r.attNuit+=n(v.attNuit);
-      r.tagJ1+=n(v.tagJ1);r.tagJ2+=n(v.tagJ2);r.tagN1+=n(v.tagN1);r.tagN2+=n(v.tagN2);
-      r.slingJ+=n(v.slingJ);r.slingN+=n(v.slingN);r.treuJ+=n(v.treuJ);r.treuN+=n(v.treuN);
-      r.rappelJ+=n(v.rappelJ);r.rappelN+=n(v.rappelN);
-      r.cordeJ+=n(v.cordeJ);r.cordeN+=n(v.cordeN);
-      r.grappeJ+=n(v.grappeJ);r.grappeN+=n(v.grappeN);
-      r.nacelleJ+=n(v.nacelleJ);r.nacelleN+=n(v.nacelleN);
-    });
-    return map;
-  }
+  // Totaux par fonction
+  var foncsMap={};
+  data.forEach(function(v){
+    var f=v.fonction||'—';
+    if(!foncsMap[f])foncsMap[f]={potJour:0,potNuit:0,potJvn:0,potIvi:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,attJour:0,attNuit:0,tagJ1:0,tagJ2:0,tagN1:0,tagN2:0,slingJ:0,slingN:0,treuJ:0,treuN:0,rappelJ:0,rappelN:0,cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0};
+    var r=foncsMap[f];
+    r.potJour+=pH(v.potJour);r.potNuit+=pH(v.potNuit);r.potJvn+=pH(v.potJvn);r.potIvi+=pH(v.potIvi);
+    ['ils','vor','ndb','gca','sca','rnp','attJour','attNuit','tagJ1','tagJ2','tagN1','tagN2',
+     'slingJ','slingN','treuJ','treuN','rappelJ','rappelN','cordeJ','cordeN','grappeJ','grappeN','nacelleJ','nacelleN'
+    ].forEach(function(k){r[k]+=n(v[k]);});
+  });
 
-  // Largeurs colonnes : fonction 22mm + 28 colonnes de données
-  // Total utile : 297 - 2*7 = 283mm. Fonction = 22. Reste = 261 / 28 = 9.32
-  var fnW=22, dcW=9.3;
-  var colStyles={0:{halign:'left',cellWidth:fnW}};
-  for(var ci=1;ci<=28;ci++)colStyles[ci]={cellWidth:dcW};
+  var tot={potJour:0,potNuit:0,potJvn:0,potIvi:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,attJour:0,attNuit:0,tagJ1:0,tagJ2:0,tagN1:0,tagN2:0,slingJ:0,slingN:0,treuJ:0,treuN:0,rappelJ:0,rappelN:0,cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0};
+  data.forEach(function(v){
+    tot.potJour+=pH(v.potJour);tot.potNuit+=pH(v.potNuit);tot.potJvn+=pH(v.potJvn);tot.potIvi+=pH(v.potIvi);
+    ['ils','vor','ndb','gca','sca','rnp','attJour','attNuit','tagJ1','tagJ2','tagN1','tagN2',
+     'slingJ','slingN','treuJ','treuN','rappelJ','rappelN','cordeJ','cordeN','grappeJ','grappeN','nacelleJ','nacelleN'
+    ].forEach(function(k){tot[k]+=n(v[k]);});
+  });
 
-  // ════════════════════════════════════════════════════════════════
-  // PAGE 1 — SYNTHÈSE PAR FONCTION
-  // ════════════════════════════════════════════════════════════════
+  var baseS={fontSize:7,cellPadding:1.4,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[150,150,150],lineWidth:0.2,overflow:'hidden'};
+  var headS={fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6.5,halign:'center',overflow:'hidden'};
+
+  // ══ PAGE 1 — SYNTHÈSE ══════════════════════════════════════════════
   var y=m;
 
-  // Barre titre
   doc.setFillColor(7,16,31);
   doc.rect(m,y,W-2*m,9,'F');
   doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
   doc.text('REGISTRE JOURNAL DES SERVICES AÉRIENS',W/2,y+6.2,{align:'center'});
   y+=11;
 
-  // Bandeau pilote 4 champs
   doc.setFillColor(215,228,248);
   doc.rect(m,y,W-2*m,8,'FD');
   doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
-  var cw=(W-2*m)/4;
+  var cw4=(W-2*m)/4;
   [['GRADE',profil.grade||''],['NOM',profil.nom||''],['PRÉNOM',profil.prenom||''],['BREVET',profil.brevet||'']
-  ].forEach(function(p,i){doc.text(p[0]+' : '+p[1],m+4+i*cw,y+5.2);});
+  ].forEach(function(p,i){doc.text(p[0]+' : '+p[1],m+4+i*cw4,y+5.2);});
   y+=10;
 
-  // Période
   doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);
   doc.text('Période : '+pLabel,m,y+4);
   y+=7;
 
-  // Tableau par fonction
-  var foncsMap=sumByFonc(data);
-  var foncs=Object.keys(foncsMap);
-
-  // Ligne TOT = somme de tous les vols
-  var tot=sumByFonc(data)['__tot__']||{potJour:0,potNuit:0,potJvn:0,potIvi:0,ils:0,vor:0,ndb:0,gca:0,sca:0,rnp:0,attJour:0,attNuit:0,tagJ1:0,tagJ2:0,tagN1:0,tagN2:0,slingJ:0,slingN:0,treuJ:0,treuN:0,rappelJ:0,rappelN:0,cordeJ:0,cordeN:0,grappeJ:0,grappeN:0,nacelleJ:0,nacelleN:0};
-  data.forEach(function(v){
-    tot.potJour+=pH(v.potJour);tot.potNuit+=pH(v.potNuit);tot.potJvn+=pH(v.potJvn);tot.potIvi+=pH(v.potIvi);
-    tot.ils+=n(v.ils);tot.vor+=n(v.vor);tot.ndb+=n(v.ndb);tot.gca+=n(v.gca);tot.sca+=n(v.sca);tot.rnp+=n(v.rnp);
-    tot.attJour+=n(v.attJour);tot.attNuit+=n(v.attNuit);
-    tot.tagJ1+=n(v.tagJ1);tot.tagJ2+=n(v.tagJ2);tot.tagN1+=n(v.tagN1);tot.tagN2+=n(v.tagN2);
-    tot.slingJ+=n(v.slingJ);tot.slingN+=n(v.slingN);tot.treuJ+=n(v.treuJ);tot.treuN+=n(v.treuN);
-    tot.rappelJ+=n(v.rappelJ);tot.rappelN+=n(v.rappelN);
-    tot.cordeJ+=n(v.cordeJ);tot.cordeN+=n(v.cordeN);
-    tot.grappeJ+=n(v.grappeJ);tot.grappeN+=n(v.grappeN);
-    tot.nacelleJ+=n(v.nacelleJ);tot.nacelleN+=n(v.nacelleN);
-  });
-
-  var synthBody=foncs.map(function(f){return [f].concat(rowData(foncsMap[f]));});
+  var synthBody=Object.keys(foncsMap).map(function(f){return[f].concat(rowData(foncsMap[f]));});
   synthBody.push(['TOT'].concat(rowData(tot)));
   var lastSynth=synthBody.length-1;
 
+  // Cellules fusionnées pour les groupes dans le header
   doc.autoTable({
     startY:y,
-    head:[['Fonction'].concat(dataCols)],
+    head:[headRow1, headRow2],
     body:synthBody,
-    styles:baseS, headStyles:headS, columnStyles:colStyles,
-    margin:{left:m,right:m}, theme:'grid',
+    styles:baseS,
+    headStyles:headS,
+    columnStyles:colStyles,
+    margin:{left:m,right:m},
+    theme:'grid',
     didParseCell:function(d){
-      if(d.row.index===lastSynth){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}
+      if(d.section==='head' && d.row.index===0){
+        // Cellules de groupe : mettre en gras et fond bleu foncé
+        var groups=[[1,4],[5,10],[11,12],[13,16],[17,18],[19,20],[21,22],[23,24],[25,26],[27,28]];
+        groups.forEach(function(g){if(d.column.index===g[0]){d.cell.styles.fillColor=[100,149,200];d.cell.styles.textColor=[255,255,255];}});
+        if(d.column.index===0){d.cell.styles.fillColor=[50,80,130];d.cell.styles.textColor=[255,255,255];}
+      }
+      if(d.section==='body' && d.row.index===lastSynth){
+        d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];
+      }
     }
   });
-  y=doc.lastAutoTable.finalY+8;
+  y=doc.lastAutoTable.finalY+9;
 
   // Signatures
-  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
+  doc.setFontSize(9.5);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
   doc.text("L'intéressé :",m,y);
   doc.text("L'autorité :",W/2+20,y);
-  doc.setDrawColor(130,130,130);
-  doc.line(m+28,y+13,m+90,y+13);
-  doc.line(W/2+48,y+13,W/2+110,y+13);
-  y+=20;
-  doc.setFontSize(8);doc.setFont('helvetica','italic');
-  doc.text('Certifié conforme au registre journal des services aériens',W/2,y,{align:'center'});
+  doc.setDrawColor(120,120,120);
+  doc.line(m+30,y+15,m+95,y+15);
+  doc.line(W/2+50,y+15,W/2+115,y+15);
+  doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(60,60,60);
+  doc.text('Certifié conforme au registre journal des services aériens',W/2,y+25,{align:'center'});
 
-  // ════════════════════════════════════════════════════════════════
-  // PAGE 2 — VOLS DÉTAILLÉS (saut de page forcé)
-  // ════════════════════════════════════════════════════════════════
+  // ══ PAGE 2 — JOURNAL VOL PAR VOL ══════════════════════════════════
   doc.addPage();
   y=m;
 
   doc.setFillColor(7,16,31);
   doc.rect(m,y,W-2*m,8,'F');
   doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('JOURNAL DES VOLS — '+pLabel,W/2,y+5.2,{align:'center'});
+  doc.text('JOURNAL DES VOLS — '+pLabel,W/2,y+5.3,{align:'center'});
   y+=10;
 
-  // Corps : 1 ligne par vol (ordre chrono asc = plus récent en dernier)
+  // Colonne description réduite pour garder les mêmes largeurs données
+  var colStyles2=JSON.parse(JSON.stringify(colStyles));
+  colStyles2[0]={halign:'left',cellWidth:fnW,fontStyle:'normal'};
+
   var detailBody=data.map(function(v){
-    return [fDate(v.date)+' '+( v.type||'')+(v.fonction?' ('+v.fonction+')':'')+(v.pilote?' — '+v.pilote:'')+(v.mission?' '+v.mission:'')]
-      .concat(rowData(v));
+    var desc=(fDate(v.date)||'')+(v.type?' · '+v.type:'')+(v.fonction?' ('+v.fonction+')':'');
+    return[desc].concat(rowData(v));
   });
   detailBody.push(['TOTAL'].concat(rowData(tot)));
   var lastDetail=detailBody.length-1;
 
-  // Colonne 0 plus large pour la description du vol
-  var colStyles2={0:{halign:'left',cellWidth:38}};
-  for(var cj=1;cj<=28;cj++)colStyles2[cj]={cellWidth:(W-2*m-38)/28};
-
   doc.autoTable({
     startY:y,
-    head:[['Date / Appareil / Pilote / Mission'].concat(dataCols)],
+    head:[headRow1,headRow2],
     body:detailBody,
-    styles:{fontSize:6,cellPadding:1.1,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[150,150,150],lineWidth:0.2},
-    headStyles:{fillColor:[165,198,232],textColor:[0,0,0],fontStyle:'bold',fontSize:6},
+    styles:{fontSize:6.5,cellPadding:1.2,halign:'center',textColor:[0,0,0],fillColor:[255,255,255],lineColor:[150,150,150],lineWidth:0.2,overflow:'hidden'},
+    headStyles:headS,
     columnStyles:colStyles2,
-    margin:{left:m,right:m}, theme:'grid',
+    margin:{left:m,right:m},
+    theme:'grid',
     didParseCell:function(d){
-      if(d.row.index===lastDetail){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];}
+      if(d.section==='head' && d.row.index===0){
+        var groups=[[1,4],[5,10],[11,12],[13,16],[17,18],[19,20],[21,22],[23,24],[25,26],[27,28]];
+        groups.forEach(function(g){if(d.column.index===g[0]){d.cell.styles.fillColor=[100,149,200];d.cell.styles.textColor=[255,255,255];}});
+        if(d.column.index===0){d.cell.styles.fillColor=[50,80,130];d.cell.styles.textColor=[255,255,255];}
+      }
+      if(d.section==='body' && d.row.index===lastDetail){
+        d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[198,218,242];
+      }
     }
   });
 
-  // Numéros de page
   var pages=doc.internal.getNumberOfPages();
   for(var pi=1;pi<=pages;pi++){
     doc.setPage(pi);
@@ -1949,11 +1950,9 @@ function exportPdfVols(){
     doc.text('CarnetVol — Page '+pi+'/'+pages,W/2,H-3,{align:'center'});
   }
 
-  var fname='RegistreServices_'+pLabel.replace(/[ →\/]/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.pdf';
-  doc.save(fname);
+  doc.save('RegistreServices_'+pLabel.replace(/[ →\/]/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.pdf');
   toast('📋 Registre des services généré !');
 }
-
 
 function exportPdfSimus(){
   var {jsPDF}=window.jspdf;
