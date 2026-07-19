@@ -1,16 +1,16 @@
 // CarnetVol Service Worker v3
 // GitHub Pages: https://joris2106.github.io/carnetvol
 const CACHE_NAME = 'carnetvol-v3';
-const START_URL = 'https://joris2106.github.io/carnetvol-local/index.html';
+const START_URL = 'https://joris2106.github.io/carnetvol/index.html';
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll([
         START_URL,
-        'https://joris2106.github.io/carnetvol-local/manifest.json',
-        'https://joris2106.github.io/carnetvol-local/icons/icon-192.png',
-        'https://joris2106.github.io/carnetvol-local/icons/icon-512.png'
+        'https://joris2106.github.io/carnetvol/manifest.json',
+        'https://joris2106.github.io/carnetvol/icons/icon-192.png',
+        'https://joris2106.github.io/carnetvol/icons/icon-512.png'
       ]).catch(() => {});
     })
   );
