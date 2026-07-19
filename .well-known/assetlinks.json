@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.joris2106.twa",
+        "sha256_cert_fingerprints": ["C5:EF:06:22:E9:A2:0C:05:5E:9E:AE:29:46:9F:D7:AC:9C:5C:AE:92:79:12:9F:04:31:5D:80:40:77:4E:34:CA"]
+      }
+    }]
