@@ -2,7 +2,7 @@
   "name": "CarnetVol — Hélicoptère",
   "short_name": "CarnetVol",
   "description": "Journal de bord électronique pour pilotes d'hélicoptère",
-  "start_url": "./index.html",
+  "start_url": "joris2106.github.io/carnetvol-local/index.html",
   "id": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
