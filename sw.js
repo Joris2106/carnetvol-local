@@ -1,6 +1,6 @@
-// CarnetVol Service Worker v3
-// GitHub Pages: https://joris2106.github.io/carnetvol
-const CACHE_NAME = 'carnetvol-v3';
+// CarnetVol Service Worker v4
+// Chemins relatifs : fonctionne sur n'importe quel repo/dossier (carnetvol, carnetvol-local, etc.)
+const CACHE_NAME = 'carnetvol-v4';
 const START_URL = './index.html';
 
 self.addEventListener('install', event => {
@@ -8,7 +8,6 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll([
         START_URL,
-        './index.html',
         './manifest.json',
         './icons/icon-192.png',
         './icons/icon-512.png'
