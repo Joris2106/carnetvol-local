@@ -1,6 +1,6 @@
 # 🚁 CarnetVol — Journal de bord hélicoptère
 
-**URL de l'application :** [https://joris2106.github.io/carnetvol](https://joris2106.github.io/carnetvol)
+**URL de l'application :** [https://joris2106.github.io/carnetvol](https://joris2106.github.io/carnetvol-local)
 
 Application web progressive (PWA) installable sur Android, iOS et desktop.
 
@@ -8,7 +8,7 @@ Application web progressive (PWA) installable sur Android, iOS et desktop.
 
 ## 📱 Installation sur Android
 
-1. Ouvrir **[https://joris2106.github.io/carnetvol](https://joris2106.github.io/carnetvol)** dans **Chrome** sur Android
+1. Ouvrir **[https://joris2106.github.io/carnetvol](https://joris2106.github.io/carnetvol-local)** dans **Chrome** sur Android
 2. Une bannière **"Installer CarnetVol"** apparaît → appuyer sur **INSTALLER**
 3. L'app s'ajoute à votre écran d'accueil
 
@@ -20,7 +20,7 @@ Si la bannière n'apparaît pas :
 ## 🗂️ Structure
 
 ```
-carnetvol/
+carnetvol-local/
 ├── index.html      ← Application complète
 ├── manifest.json   ← Configuration PWA
 ├── sw.js           ← Service Worker (hors-ligne)
