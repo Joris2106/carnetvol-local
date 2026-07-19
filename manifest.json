@@ -28,28 +28,28 @@
   "screenshots": [
     {
       "src": "screenshots/screen1.png",
-      "sizes": "1080x1920",
+      "sizes": "864x1939",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Liste des vols"
     },
     {
       "src": "screenshots/screen2.png",
-      "sizes": "1080x1920",
+      "sizes": "864x1939",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Ajout d'un vol"
     },
     {
       "src": "screenshots/screen3.png",
-      "sizes": "1080x1920",
+      "sizes": "864x1939",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Statistiques"
     },
     {
       "src": "screenshots/screen4.png",
-      "sizes": "1080x1920",
+      "sizes": "864x1939",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Ajout d'un vol"
