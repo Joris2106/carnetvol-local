@@ -303,6 +303,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Exo 2'
     <button class="filter-reset" onclick="resetListFilters()">✕ Effacer filtres</button>
   </div>
   <div class="results-count" id="list-count"></div>
+  <button class="btn-export" style="margin:0 12px 10px" onclick="exportFilteredVolsToExcel()">📊 EXPORTER LA VUE FILTRÉE (.xlsx)</button>
   <div class="vol-list" id="vol-list"></div>
 </div>
 
@@ -814,6 +815,14 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function pVols(){localStorage.setItem('cv_vols',JSON.stringify(vols));updateHeader();}
 function pSimus(){localStorage.setItem('cv_simus',JSON.stringify(simus));}
 function pH(s){if(s===''||s==null)return 0;var v=parseFloat(String(s).replace(',','.'));return isNaN(v)?0:v;}
+function xlDate(d){if(!d)return'';var p=d.split('-');if(p.length!==3)return'';var dt=new Date(Date.UTC(+p[0],+p[1]-1,+p[2],12,0,0));return isNaN(dt.getTime())?'':dt;}
+function fromXlDate(v){
+  if(v instanceof Date && !isNaN(v.getTime())){
+    var y=v.getUTCFullYear(), mo=String(v.getUTCMonth()+1).padStart(2,'0'), da=String(v.getUTCDate()).padStart(2,'0');
+    return y+'-'+mo+'-'+da;
+  }
+  return v||'';
+}
 function fH(h){if(!h)return'0.0';return parseFloat(h.toFixed(1)).toString();}
 function fDate(d){if(!d)return'—';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function gv(id){return document.getElementById(id).value;}
@@ -983,9 +992,9 @@ function resetListFilters(){
 }
 
 // ══ LISTE VOLS ═════════════════════════════════════════════════════
-function renderList(){
+function getFilteredVolsList(){
   var q=(document.getElementById('search-vol').value||'').toLowerCase();
-  var list=vols.filter(function(v){
+  return vols.filter(function(v){
     if(q&&![v.type,v.immat,v.mission,v.lieu,v.pilote,v.code,v.fonction].some(function(x){return(x||'').toLowerCase().indexOf(q)!==-1;}))return false;
     if(msdHas('lf-type')    &&!msdGet('lf-type').has(v.type||''))    return false;
     if(msdHas('lf-fonction')&&!msdGet('lf-fonction').has(v.fonction||''))return false;
@@ -994,6 +1003,9 @@ function renderList(){
     if(msdHas('lf-mission') &&!msdGet('lf-mission').has(v.mission||'')) return false;
     return true;
   }).sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
+}
+function renderList(){
+  var list=getFilteredVolsList();
   document.getElementById('list-count').textContent=list.length+' vol'+(list.length>1?'s':'');
   var el=document.getElementById('vol-list');
   if(!list.length){el.innerHTML='<div class="empty"><div class="eico">🚁</div><p>Aucun résultat</p></div>';return;}
@@ -1139,9 +1151,9 @@ function resetSimuFilters(){
 }
 
 // ══ LISTE SIMUS ════════════════════════════════════════════════════
-function renderSimuList(){
+function getFilteredSimusList(){
   var q=(document.getElementById('search-simu').value||'').toLowerCase();
-  var list=simus.filter(function(s){
+  return simus.filter(function(s){
     if(q&&![s.machine,s.typeSimu,s.pilote,s.mission,s.fonction].some(function(x){return(x||'').toLowerCase().indexOf(q)!==-1;}))return false;
     if(msdHas('sf-machine') &&!msdGet('sf-machine').has(s.machine||''))  return false;
     if(msdHas('sf-fonction')&&!msdGet('sf-fonction').has(s.fonction||''))return false;
@@ -1149,6 +1161,9 @@ function renderSimuList(){
     if(msdHas('sf-mission') &&!msdGet('sf-mission').has(s.mission||''))  return false;
     return true;
   }).sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
+}
+function renderSimuList(){
+  var list=getFilteredSimusList();
   document.getElementById('simu-count').textContent=list.length+' séance'+(list.length>1?'s':'');
   var el=document.getElementById('simu-list');
   if(!list.length){el.innerHTML='<div class="empty"><div class="eico">🖥️</div><p>Aucun résultat</p></div>';return;}
@@ -1770,7 +1785,7 @@ function exportPdfVols(){
   var MS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   function mLbl(d){if(!d)return'—';var p=d.split('-');return MS[parseInt(p[1])-1]+'-'+p[0].slice(2);}
   var d0=data.length?data[0].date:'', d1=data.length?data[data.length-1].date:'';
-  var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' → '+fDate(d1);
+  var pLabel=!d0?'Tous':d0.slice(0,7)===d1.slice(0,7)?mLbl(d0):fDate(d0)+' au '+fDate(d1);
 
   function hve(v){var r=parseFloat((+v||0).toFixed(1));return r?String(r):'';}
   function nv(v){return (+v)?String(+v):'';}
@@ -2127,6 +2142,64 @@ function loadCustomOptions(){
   customFonctions.forEach(function(f){ addOptToSel('f-fonction',f); addOptToSel('s-fonction',f); });
 }
 
+function exportFilteredVolsToExcel(){
+  try{
+    var list = getFilteredVolsList();
+    if(!list.length){ toast('Aucun vol à exporter avec ces filtres', '#e63946'); return; }
+
+    var headers = ['Date','Type','Immatriculation','Fonction','Pilote','Mission','Code','Lieu',
+      'Pot.Jour','Pot.Nuit','Pot.JVN','Pot.IFR','Pot.Tactique',
+      'Att.Jour','Att.Nuit','ILS','VOR','NDB','GCA','SCA','RNP',
+      'SlingJ','SlingN','RappelJ','RappelN','TreuJ','TreuN',
+      'CordeJ','CordeN','GrappeJ','GrappeN','NacelleJ','NacelleN',
+      'TagJ1','TagJ2','TagN1','TagN2','Remarques'];
+
+    var rows = list.map(function(v){
+      return [
+        xlDate(v.date), v.type||'', v.immat||'', v.fonction||'', v.pilote||'',
+        v.mission||'', v.code||'', v.lieu||'',
+        v.potJour||'', v.potNuit||'', v.potJvn||'', v.potIvi||'', v.potTac||'',
+        v.attJour||'', v.attNuit||'',
+        v.ils||'', v.vor||'', v.ndb||'', v.gca||'', v.sca||'', v.rnp||'',
+        v.slingJ||'', v.slingN||'', v.rappelJ||'', v.rappelN||'',
+        v.treuJ||'', v.treuN||'', v.cordeJ||'', v.cordeN||'',
+        v.grappeJ||'', v.grappeN||'', v.nacelleJ||'', v.nacelleN||'',
+        v.tagJ1||'', v.tagJ2||'', v.tagN1||'', v.tagN2||'',
+        v.remarques||''
+      ];
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
+    for(var r=1; r<=rows.length; r++){
+      var cellRef = XLSX.utils.encode_cell({r:r, c:0});
+      if(ws[cellRef] && ws[cellRef].t==='d') ws[cellRef].z = 'dd/mm/yyyy';
+    }
+    ws['!cols'] = [
+      {wch:12},{wch:10},{wch:14},{wch:8},{wch:18},{wch:20},{wch:6},{wch:14},
+      {wch:9},{wch:9},{wch:9},{wch:9},{wch:9},
+      {wch:9},{wch:9},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},
+      {wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},
+      {wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},
+      {wch:6},{wch:6},{wch:6},{wch:6},{wch:20}
+    ];
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vols filtrés');
+
+    var date = new Date().toISOString().split('T')[0];
+    var filename = 'CarnetVol_vue_filtree_' + date + '.xlsx';
+    var wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    var blob  = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var url   = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }catch(err){
+    toast('Erreur export : ' + err.message, '#e63946');
+  }
+}
+
 // ══ EXPORT / IMPORT DES DONNÉES ═════════════════════════════════════
 function exportToExcel(){
   try{
@@ -2145,7 +2218,7 @@ function exportToExcel(){
 
     var volRows = vols.map(function(v){
       return [
-        v.date||'', v.type||'', v.immat||'', v.fonction||'', v.pilote||'',
+        xlDate(v.date), v.type||'', v.immat||'', v.fonction||'', v.pilote||'',
         v.mission||'', v.code||'', v.lieu||'',
         v.potJour||'', v.potNuit||'', v.potJvn||'', v.potIvi||'', v.potTac||'',
         v.attJour||'', v.attNuit||'',
@@ -2158,6 +2231,10 @@ function exportToExcel(){
       ];
     });
     var wsVols = XLSX.utils.aoa_to_sheet([volHeaders].concat(volRows));
+    for(var rV=1; rV<=volRows.length; rV++){
+      var cellRefV = XLSX.utils.encode_cell({r:rV, c:0});
+      if(wsVols[cellRefV] && wsVols[cellRefV].t==='d') wsVols[cellRefV].z = 'dd/mm/yyyy';
+    }
     // Largeurs colonnes
     wsVols['!cols'] = [
       {wch:12},{wch:10},{wch:14},{wch:8},{wch:18},{wch:20},{wch:6},{wch:14},
@@ -2176,7 +2253,7 @@ function exportToExcel(){
 
     var simuRows = simus.map(function(s){
       return [
-        s.date||'', s.machine||'', s.typeSimu||'', s.fonction||'', s.pilote||'', s.mission||'',
+        xlDate(s.date), s.machine||'', s.typeSimu||'', s.fonction||'', s.pilote||'', s.mission||'',
         s.potJour||'', s.potNuit||'', s.potJvn||'', s.potIvi||'', s.potTac||'',
         s.attJour||'', s.attNuit||'',
         s.ils||'', s.vor||'', s.ndb||'', s.gca||'', s.sca||'', s.rnp||'',
@@ -2184,6 +2261,10 @@ function exportToExcel(){
       ];
     });
     var wsSimu = XLSX.utils.aoa_to_sheet([simuHeaders].concat(simuRows));
+    for(var rS=1; rS<=simuRows.length; rS++){
+      var cellRefS = XLSX.utils.encode_cell({r:rS, c:0});
+      if(wsSimu[cellRefS] && wsSimu[cellRefS].t==='d') wsSimu[cellRefS].z = 'dd/mm/yyyy';
+    }
     wsSimu['!cols'] = [{wch:12},{wch:10},{wch:12},{wch:8},{wch:18},{wch:20},
       {wch:9},{wch:9},{wch:9},{wch:9},{wch:9},{wch:9},{wch:9},
       {wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:20}];
@@ -2265,7 +2346,7 @@ function importFromExcel(event){
   var reader = new FileReader();
   reader.onload = function(e){
     try{
-      var wb = XLSX.read(e.target.result, {type:'array'});
+      var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
 
       // ── Lire feuille Vols ──────────────────────────────────────
       var wsVols = wb.Sheets['Vols'];
@@ -2278,7 +2359,7 @@ function importFromExcel(event){
         if(!r[0]) continue;
         newVols.push({
           id:        'imp' + Date.now() + i,
-          date:      r[0]  || '', type:      r[1]  || '', immat:   r[2]  || '',
+          date:      fromXlDate(r[0]), type:      r[1]  || '', immat:   r[2]  || '',
           fonction:  r[3]  || '', pilote:    r[4]  || '', mission: r[5]  || '',
           code:      r[6]  || '', lieu:      r[7]  || '',
           potJour:   r[8]  || '', potNuit:   r[9]  || '', potJvn:  r[10] || '',
@@ -2308,7 +2389,7 @@ function importFromExcel(event){
           if(!s[0]) continue;
           newSimus.push({
             id:       'smp' + Date.now() + j,
-            date:     s[0] || '', machine:  s[1] || '', typeSimu: s[2] || '',
+            date:     fromXlDate(s[0]), machine:  s[1] || '', typeSimu: s[2] || '',
             fonction: s[3] || '', pilote:   s[4] || '', mission:  s[5] || '',
             potJour:  s[6] || '', potNuit:  s[7] || '', potJvn:   s[8] || '',
             potIvi:   s[9] || '', potTac:   s[10]|| '',
